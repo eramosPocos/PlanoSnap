@@ -1,27 +1,135 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PlanoSnap - v2.1 Pro</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: #f0f0f0; padding: 10px; margin: 0; }
-        #miCanvas { border: 2px solid #333; background: #eee; touch-action: none; display: block; margin: 0 auto; cursor: crosshair; }
-        .controles { margin: 10px 0; padding: 15px; background: white; border-radius: 8px; display: inline-block; text-align: left; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 95vw; }
-        button { padding: 10px 12px; margin: 2px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9; }
-        button:disabled { background: #eee; color: #aaa; }
-        button.activo { background: #007bff; color: white; border-color: #0056b3; }
-        input { padding: 8px; margin: 5px; font-size: 16px; width: 80px; box-sizing: border-box; }
-        #resultado { font-size: 14px; font-weight: bold; color: #333; margin-top: 10px; min-height: 20px; font-family: monospace; background: #e9ecef; padding: 8px; border-radius: 4px; word-wrap: break-word;}
-        #estado { font-weight: bold; color: #555; margin-bottom: 10px; display: block; font-size: 14px;}
-        #loading { color: red; font-size: 20px; display: none; }
-        .botonera { margin-top: 10px; border-top: 1px solid #ccc; padding-top: 10px; }
-        .fila { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
-        #panelEdicion { background: #e6f7ff; padding: 10px; border-radius: 5px; margin-top: 10px; display: none; border: 1px solid #b3d9ff;}
-        #panelAplanar { background: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 10px; display: none; border: 1px solid #ccc;}
-        .titulo-seccion { font-size: 12px; color: #666; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;}
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 0;
+        }
+
+        #miCanvas {
+            border: 2px solid #333;
+            background: #eee;
+            touch-action: none;
+            display: block;
+            margin: 0 auto;
+            cursor: crosshair;
+        }
+
+        .controles {
+            margin: 10px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            display: inline-block;
+            text-align: left;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            max-width: 95vw;
+        }
+
+        button {
+            padding: 10px 12px;
+            margin: 2px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+
+        button:disabled {
+            background: #eee;
+            color: #aaa;
+        }
+
+        button.activo {
+            background: #007bff;
+            color: white;
+            border-color: #0056b3;
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+            font-size: 16px;
+            width: 80px;
+            box-sizing: border-box;
+        }
+
+        #resultado {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+            min-height: 20px;
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 8px;
+            border-radius: 4px;
+            word-wrap: break-word;
+        }
+
+        #estado {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 10px;
+            display: block;
+            font-size: 14px;
+        }
+
+        #loading {
+            color: red;
+            font-size: 20px;
+            display: none;
+        }
+
+        .botonera {
+            margin-top: 10px;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+
+        .fila {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+        }
+
+        #panelEdicion {
+            background: #e6f7ff;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+            border: 1px solid #b3d9ff;
+        }
+
+        #panelAplanar {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+            border: 1px solid #ccc;
+        }
+
+        .titulo-seccion {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
     </style>
 </head>
+
 <body>
 
     <h2>PlanoSnap v2.1</h2>
@@ -30,7 +138,7 @@
     <div class="controles">
         <span id="estado">Paso 1: Carga una foto.</span><br>
         <input type="file" id="inputImagen" accept="image/*" style="margin-top:10px;">
-        
+
         <div class="botonera" id="herramientas" style="display:none;">
             <div class="titulo-seccion">Herramientas</div>
             <div class="fila">
@@ -45,7 +153,7 @@
                 <button id="btnZoomOut">🔍-</button>
                 <button id="btnAplanarToggle">📐 Aplanar</button>
             </div>
-            
+
             <div id="panelEdicion">
                 <strong>Cota Seleccionada:</strong><br>
                 <span>Yo digo (cm):</span> <input type="number" id="inputManual" step="0.1" placeholder="Manual">
@@ -65,7 +173,7 @@
     </div>
 
     <canvas id="miCanvas" width="800" height="600"></canvas>
-    
+
     <div id="resultado">Esperando...</div>
 
     <script async src="https://docs.opencv.org/4.x/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
@@ -73,14 +181,14 @@
     <script>
         const canvas = document.getElementById('miCanvas');
         const ctx = canvas.getContext('2d');
-        
+
         let imagenCargada = null;
         let bloquearClics = false;
-        let isFlattened = false; 
-        
-        let cotas = []; 
-        let tempPuntos = []; 
-        let modoCota = 'dibujar'; 
+        let isFlattened = false;
+
+        let cotas = [];
+        let tempPuntos = [];
+        let modoCota = 'dibujar';
         let cotaSeleccionadaIdx = -1;
         let calibracionMode = false;
 
@@ -90,13 +198,28 @@
         let scale = 1, offsetX = 0, offsetY = 0;
         let modoMover = false, arrastrando = false, startDragX, startDragY;
         let isPointing = false, currentImgX = 0, currentImgY = 0, currentScreenX = 0, currentScreenY = 0;
-        let pixelesPorCm = 1; 
+        let pixelesPorCm = 1;
 
-        let lastValidLockedPoint = null; 
+        let lastValidLockedPoint = null;
         let isAnchoredVisually = false;
         let lockTimer = null;
-        const LOCK_DELAY = 500; 
+        const LOCK_DELAY = 500;
         let pointerIsDown = false;
+
+        // --- SISTEMA DE HISTORIAL (DESHACER) CORREGIDO ---
+        let historial = [];
+        const MAX_HISTORIAL = 15;
+
+        function guardarEstado() {
+            // Solo guardamos datos lógicos y la ruta de la imagen, NUNCA el canvas renderizado.
+            historial.push({
+                cotas: JSON.parse(JSON.stringify(cotas)),
+                isFlattened: isFlattened,
+                pixelesPorCm: pixelesPorCm,
+                imgSrc: imagenCargada.src // Guardamos la fuente, no los píxeles
+            });
+            if (historial.length > MAX_HISTORIAL) historial.shift();
+        }
 
         function onOpenCvReady() { document.getElementById('loading').style.display = 'none'; }
 
@@ -108,15 +231,16 @@
                 centrarImagen(); reiniciar();
                 document.getElementById('herramientas').style.display = 'block';
                 document.getElementById('estado').innerText = "Modo Dibujo. Toca dos puntos.";
+                guardarEstado(); // Estado inicial
             };
             img.src = URL.createObjectURL(file);
         });
 
-        document.getElementById('btnMover').addEventListener('click', function() { modoMover = !modoMover; this.classList.toggle('activo'); canvas.style.cursor = modoMover ? 'grab' : 'crosshair'; });
+        document.getElementById('btnMover').addEventListener('click', function () { modoMover = !modoMover; this.classList.toggle('activo'); canvas.style.cursor = modoMover ? 'grab' : 'crosshair'; });
         document.getElementById('btnZoomIn').addEventListener('click', () => { scale *= 1.3; dibujar(); });
-        document.getElementById('btnZoomOut').addEventListener('click', () => { scale /= 1.3; if(scale<0.5) scale=0.5; dibujar(); });
-        
-        document.getElementById('btnAplanarToggle').addEventListener('click', function() {
+        document.getElementById('btnZoomOut').addEventListener('click', () => { scale /= 1.3; if (scale < 0.5) scale = 0.5; dibujar(); });
+
+        document.getElementById('btnAplanarToggle').addEventListener('click', function () {
             calibracionMode = !calibracionMode; this.classList.toggle('activo');
             document.getElementById('panelAplanar').style.display = calibracionMode ? 'block' : 'none';
             if (calibracionMode) {
@@ -130,19 +254,19 @@
             dibujar();
         });
 
-        document.getElementById('btnDibujar').addEventListener('click', function() {
+        document.getElementById('btnDibujar').addEventListener('click', function () {
             calibracionMode = false; document.getElementById('panelAplanar').style.display = 'none';
             document.getElementById('btnAplanarToggle').classList.remove('activo');
             modoCota = 'dibujar'; this.classList.add('activo');
             document.getElementById('btnSeleccionar').classList.remove('activo');
             document.getElementById('panelEdicion').style.display = 'none';
-            cotaSeleccionadaIdx = -1; canvas.style.cursor = 'crosshair'; 
+            cotaSeleccionadaIdx = -1; canvas.style.cursor = 'crosshair';
             tempPuntos = []; window.tempP1 = null;
             document.getElementById('estado').innerText = "Modo Dibujo. Toca inicio y fin.";
             dibujar();
         });
-        
-        document.getElementById('btnSeleccionar').addEventListener('click', function() {
+
+        document.getElementById('btnSeleccionar').addEventListener('click', function () {
             calibracionMode = false; document.getElementById('panelAplanar').style.display = 'none';
             document.getElementById('btnAplanarToggle').classList.remove('activo');
             modoCota = 'seleccionar'; this.classList.add('activo');
@@ -154,6 +278,7 @@
 
         document.getElementById('btnAplicarManual').addEventListener('click', () => {
             if (cotaSeleccionadaIdx >= 0) {
+                guardarEstado(); // <-- ANTES de modificar
                 const val = document.getElementById('inputManual').value;
                 cotas[cotaSeleccionadaIdx].manualCm = val === "" ? null : parseFloat(val);
                 mostrarPanelEdicion(cotaSeleccionadaIdx);
@@ -163,24 +288,80 @@
 
         document.getElementById('btnBorrarManual').addEventListener('click', () => {
             if (cotaSeleccionadaIdx >= 0) {
+                guardarEstado(); // <-- ANTES de modificar
                 cotas[cotaSeleccionadaIdx].manualCm = null;
                 mostrarPanelEdicion(cotaSeleccionadaIdx);
                 actualizarResultado(); dibujar();
             }
         });
 
-        document.getElementById('btnDeshacer').addEventListener('click', () => { 
-            if (calibracionMode && tempPuntos.length > 0) { tempPuntos.pop(); dibujar(); document.getElementById('btnAplanar').disabled = tempPuntos.length !== 4; } 
-            else if (cotas.length > 0) { cotas.pop(); cotaSeleccionadaIdx = -1; document.getElementById('panelEdicion').style.display='none'; actualizarResultado(); dibujar(); }
+        document.getElementById('btnDeshacer').addEventListener('click', () => {
+            // 1. Si estamos marcando puntos de calibración, los borramos
+            if (calibracionMode && tempPuntos.length > 0) {
+                tempPuntos.pop(); dibujar();
+                document.getElementById('btnAplanar').disabled = tempPuntos.length !== 4;
+                return;
+            }
+
+            // 2. NUEVO: Si estamos dibujando y ya pusimos un punto, lo cancelamos sin tocar el historial
+            if (modoCota === 'dibujar' && window.tempP1) {
+                window.tempP1 = null;
+                document.getElementById('estado').innerText = "Primer punto cancelado. Toca de nuevo.";
+                dibujar();
+                return;
+            }
+
+            // 3. Si no hay temporales, deshacemos del historial real
+            if (historial.length === 0) {
+                document.getElementById('estado').innerText = "Nada que deshacer.";
+                return;
+            }
+
+            bloquearClics = true;
+            const estadoAnterior = historial.pop();
+
+            // 1. Restaurar variables lógicas
+            cotas = estadoAnterior.cotas;
+            isFlattened = estadoAnterior.isFlattened;
+            pixelesPorCm = estadoAnterior.pixelesPorCm;
+            cotaSeleccionadaIdx = -1;
+            mostrarPanelEdicion(-1);
+
+            // 2. Si la imagen base cambió (ej. deshacer un aplanar)
+            if (imagenCargada.src !== estadoAnterior.imgSrc) {
+                let imgTemp = new Image();
+                imgTemp.onload = () => {
+                    imagenCargada = imgTemp;
+                    canvas.width = imgTemp.width;
+                    canvas.height = imgTemp.height;
+                    bloquearClics = false;
+                    actualizarResultado();
+                    centrarImagen();
+                    dibujar();
+                    document.getElementById('estado').innerText = "¡Acción deshecha!";
+                };
+                imgTemp.src = estadoAnterior.imgSrc;
+            } else {
+                // 3. Si la imagen es la misma (ej. deshacer crear cota o mover punto)
+                bloquearClics = false;
+                actualizarResultado();
+                dibujar();
+                document.getElementById('estado').innerText = "¡Acción deshecha!";
+            }
         });
-        
+
         document.getElementById('btnLimpiarTodo').addEventListener('click', () => {
+            if (cotas.length === 0) return;
+            guardarEstado(); // <-- ANTES de modificar
             cotas = []; tempPuntos = []; cotaSeleccionadaIdx = -1; window.tempP1 = null;
             document.getElementById('panelEdicion').style.display = 'none';
             actualizarResultado(); dibujar();
         });
 
-        document.getElementById('btnAplanar').addEventListener('click', aplanarPlano);
+        document.getElementById('btnAplanar').addEventListener('click', () => {
+            guardarEstado(); // <-- ANTES de aplanar
+            aplanarPlano();  // Ya no guarda estado dentro
+        });
 
         function mostrarPanelEdicion(idx) {
             cotaSeleccionadaIdx = idx;
@@ -190,6 +371,7 @@
                 document.getElementById('inputManual').value = c.manualCm !== null ? c.manualCm : '';
                 panel.style.display = 'block';
             } else { panel.style.display = 'none'; }
+            actualizarResultado();
         }
 
         function actualizarResultado() {
@@ -198,7 +380,9 @@
                 let val = "N/A";
                 if (c.manualCm !== null) val = c.manualCm.toFixed(2) + " (M)";
                 else if (isFlattened) val = c.calcCm.toFixed(2);
-                return `C${i+1}: ${val}`;
+                let sel = (i === cotaSeleccionadaIdx) ? ">>> " : "";
+                let selFin = (i === cotaSeleccionadaIdx) ? " <<<" : "";
+                return `${sel}C${i + 1}: ${val}${selFin}`;
             }).join(" | ");
             document.getElementById('resultado').innerText = texto;
         }
@@ -213,20 +397,18 @@
         canvas.addEventListener('pointerdown', (e) => {
             if (!imagenCargada || bloquearClics) return;
             pointerIsDown = true; lastValidLockedPoint = null; isAnchoredVisually = false;
-            
+
             if (modoMover) { arrastrando = true; startDragX = e.clientX - offsetX; startDragY = e.clientY - offsetY; canvas.style.cursor = 'grabbing'; return; }
-            
+
             if (calibracionMode && tempPuntos.length < 4) {
                 activarLupa(getImgCoords(e)); return;
             }
 
             if (modoCota === 'seleccionar') {
-                const coords = getImgCoords(e); 
-                const umbralLinea = 40 / scale; 
-                
-                let idxLineaCercana = -1, distMinLinea = Infinity;
+                const coords = getImgCoords(e);
+                const umbralLinea = 40 / scale;
 
-                // 1. Encontrar la línea más cercana al dedo
+                let idxLineaCercana = -1, distMinLinea = Infinity;
                 for (let i = 0; i < cotas.length; i++) {
                     const c = cotas[i];
                     const dist = distanciaPuntoASegmento(coords.imgX, coords.imgY, c.p1.x, c.p1.y, c.p2.x, c.p2.y);
@@ -235,18 +417,14 @@
 
                 if (distMinLinea <= umbralLinea) {
                     if (idxLineaCercana === cotaSeleccionadaIdx) {
-                        // CASO A: Ya estaba seleccionada -> Mover el punto más cercano
                         const c = cotas[idxLineaCercana];
                         const d1 = Math.hypot(coords.imgX - c.p1.x, coords.imgY - c.p1.y);
                         const d2 = Math.hypot(coords.imgX - c.p2.x, coords.imgY - c.p2.y);
-                        let puntoAMover = d1 <= d2 ? 0 : 1;
-                        iniciarArrastreExtremo(idxLineaCercana, puntoAMover, coords);
+                        iniciarArrastreExtremo(idxLineaCercana, d1 <= d2 ? 0 : 1, coords);
                     } else {
-                        // CASO B: Toco una cota nueva -> Solo Seleccionar
                         seleccionarCotaConCoords(coords.imgX, coords.imgY);
                     }
                 } else {
-                    // CASO C: Toco el vacío -> Deseleccionar o Lupa
                     if (cotaSeleccionadaIdx !== -1) {
                         cotaSeleccionadaIdx = -1;
                         mostrarPanelEdicion(-1);
@@ -263,8 +441,8 @@
 
         function activarLupa(coords) {
             isPointing = true; clearTimeout(lockTimer);
-            currentImgX = coords.imgX; currentImgY = coords.imgY; 
-            currentScreenX = coords.screenX; currentScreenY = coords.screenY; 
+            currentImgX = coords.imgX; currentImgY = coords.imgY;
+            currentScreenX = coords.screenX; currentScreenY = coords.screenY;
             dibujar();
         }
 
@@ -276,7 +454,7 @@
 
         canvas.addEventListener('pointermove', (e) => {
             if (arrastrando) { offsetX = e.clientX - startDragX; offsetY = e.clientY - startDragY; dibujar(); return; }
-            if (!pointerIsDown) return; 
+            if (!pointerIsDown) return;
             if (isPointing || isDraggingEndpoint) {
                 const coords = getImgCoords(e);
                 currentImgX = coords.imgX; currentImgY = coords.imgY;
@@ -284,7 +462,7 @@
                 clearTimeout(lockTimer); isAnchoredVisually = false;
                 lockTimer = setTimeout(() => {
                     lastValidLockedPoint = { x: currentImgX, y: currentImgY, sX: currentScreenX, sY: currentScreenY };
-                    isAnchoredVisually = true; dibujar(); 
+                    isAnchoredVisually = true; dibujar();
                 }, LOCK_DELAY);
                 if (isDraggingEndpoint) actualizarVisualmenteCota();
                 dibujar();
@@ -293,45 +471,49 @@
 
         function actualizarVisualmenteCota() {
             const c = cotas[draggingCotaIdx];
-            if (draggingPointIdx === 0) { c.p1.x = currentImgX; c.p1.y = currentImgY; } 
+            if (draggingPointIdx === 0) { c.p1.x = currentImgX; c.p1.y = currentImgY; }
             else { c.p2.x = currentImgX; c.p2.y = currentImgY; }
             const distPx = Math.hypot(c.p2.x - c.p1.x, c.p2.y - c.p1.y);
-            c.calcCm = distPx / pixelesPorCm; 
+            c.calcCm = distPx / pixelesPorCm;
             actualizarResultado();
         }
 
         canvas.addEventListener('pointerup', (e) => {
-            pointerIsDown = false; 
+            pointerIsDown = false;
             if (arrastrando) { arrastrando = false; canvas.style.cursor = modoMover ? 'grab' : 'crosshair'; return; }
-            
+
             let finalX = lastValidLockedPoint ? lastValidLockedPoint.x : currentImgX;
             let finalY = lastValidLockedPoint ? lastValidLockedPoint.y : currentImgY;
 
             if (isDraggingEndpoint) {
+                guardarEstado(); // <-- ANTES de modificar el punto final
+
                 const c = cotas[draggingCotaIdx];
                 if (draggingPointIdx === 0) { c.p1.x = finalX; c.p1.y = finalY; } else { c.p2.x = finalX; c.p2.y = finalY; }
                 const distPx = Math.hypot(c.p2.x - c.p1.x, c.p2.y - c.p1.y);
-                c.calcCm = distPx / pixelesPorCm; 
+                c.calcCm = distPx / pixelesPorCm;
                 let idxTemp = draggingCotaIdx;
                 isDraggingEndpoint = false; draggingCotaIdx = -1; draggingPointIdx = -1; isPointing = false; lastValidLockedPoint = null; isAnchoredVisually = false;
-                mostrarPanelEdicion(idxTemp); actualizarResultado(); dibujar(); 
+                mostrarPanelEdicion(idxTemp); actualizarResultado(); dibujar();
                 document.getElementById('estado').innerText = "Punto fijado. Toca la línea para mover otro.";
                 return;
             }
 
             if (isPointing) {
                 isPointing = false; lastValidLockedPoint = null; isAnchoredVisually = false;
-                
+
                 if (calibracionMode) {
-                    tempPuntos.push({x: finalX, y: finalY}); dibujar();
+                    tempPuntos.push({ x: finalX, y: finalY }); dibujar();
                     if (tempPuntos.length === 4) { document.getElementById('btnAplanar').disabled = false; document.getElementById('estado').innerText = "¡4 puntos listos! Pulsa 'Calcular y Aplanar'."; }
-                } 
+                }
                 else if (modoCota === 'dibujar') {
-                    if (!window.tempP1) { 
-                        window.tempP1 = {x: finalX, y: finalY}; 
+                    if (!window.tempP1) {
+                        window.tempP1 = { x: finalX, y: finalY };
                         document.getElementById('estado').innerText = "Toca el segundo punto.";
                     } else {
-                        let nuevaCota = { p1: window.tempP1, p2: {x: finalX, y: finalY}, calcCm: 0, manualCm: null };
+                        guardarEstado(); // <-- ANTES de crear la cota
+
+                        let nuevaCota = { p1: window.tempP1, p2: { x: finalX, y: finalY }, calcCm: 0, manualCm: null };
                         if (isFlattened) {
                             let distPx = Math.hypot(nuevaCota.p2.x - nuevaCota.p1.x, nuevaCota.p2.y - nuevaCota.p1.y);
                             nuevaCota.calcCm = distPx / pixelesPorCm;
@@ -339,28 +521,21 @@
                         cotas.push(nuevaCota);
                         window.tempP1 = null;
                         document.getElementById('estado').innerText = "Cota creada.";
-                        actualizarResultado(); 
+                        actualizarResultado(); dibujar();
                     }
-                    dibujar();
                 }
             }
         });
 
         function seleccionarCotaConCoords(imgX, imgY) {
-            const umbral = 40 / scale; 
+            const umbral = 40 / scale;
             cotaSeleccionadaIdx = -1;
             for (let i = 0; i < cotas.length; i++) {
                 const c = cotas[i];
                 const dist = distanciaPuntoASegmento(imgX, imgY, c.p1.x, c.p1.y, c.p2.x, c.p2.y);
                 if (dist < umbral) { cotaSeleccionadaIdx = i; break; }
             }
-            
-            if (cotaSeleccionadaIdx >= 0) {
-                document.getElementById('estado').innerText = "Cota seleccionada. Toca de nuevo para mover sus puntos.";
-            } else {
-                document.getElementById('estado').innerText = "Modo Edición. Toca una línea de cota.";
-            }
-            
+            document.getElementById('estado').innerText = cotaSeleccionadaIdx >= 0 ? "Cota seleccionada. Toca de nuevo para mover." : "Modo Edición. Toca una línea de cota.";
             mostrarPanelEdicion(cotaSeleccionadaIdx); dibujar();
         }
 
@@ -383,7 +558,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.save(); ctx.translate(offsetX, offsetY); ctx.scale(scale, scale);
             if (imagenCargada) ctx.drawImage(imagenCargada, 0, 0, canvas.width, canvas.height);
-            
+
             if (tempPuntos.length > 0) {
                 ctx.strokeStyle = 'yellow'; ctx.lineWidth = Math.max(2, canvas.width / 300); ctx.fillStyle = 'yellow';
                 ctx.beginPath(); ctx.moveTo(tempPuntos[0].x, tempPuntos[0].y);
@@ -398,7 +573,7 @@
 
             cotas.forEach((c, i) => dibujarCota(c, i === cotaSeleccionadaIdx));
             ctx.restore();
-            
+
             if (isPointing) {
                 let dIX = (isAnchoredVisually && lastValidLockedPoint) ? lastValidLockedPoint.x : currentImgX;
                 let dIY = (isAnchoredVisually && lastValidLockedPoint) ? lastValidLockedPoint.y : currentImgY;
@@ -412,19 +587,19 @@
             const grosor = Math.max(3, canvas.width / 200);
             ctx.strokeStyle = seleccionada ? '#00ff00' : 'red'; ctx.lineWidth = seleccionada ? grosor * 1.5 : grosor;
             ctx.beginPath(); ctx.moveTo(c.p1.x, c.p1.y); ctx.lineTo(c.p2.x, c.p2.y); ctx.stroke();
-            
+
             const midX = (c.p1.x + c.p2.x) / 2; const midY = (c.p1.y + c.p2.y) / 2;
             const fontSize = Math.max(14, canvas.width / 45);
-            
+
             let texto1 = "", texto2 = "";
-            let color1 = "#cc0000", color2 = "#0055cc"; 
+            let color1 = "#cc0000", color2 = "#0055cc";
 
             if (isFlattened) {
                 texto1 = c.calcCm.toFixed(2) + " cm (Foto)";
-                color1 = "#cc0000"; 
+                color1 = "#cc0000";
             } else {
                 texto1 = "N/A (Sin aplanar)";
-                color1 = "#888888"; 
+                color1 = "#888888";
             }
 
             if (c.manualCm !== null) {
@@ -439,28 +614,27 @@
             let maxW = Math.max(metrics1.width, metrics2.width);
 
             ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.fillRect(midX - maxW/2 - padding, midY - cajaH/2, maxW + padding*2, cajaH);
-            
+            ctx.fillRect(midX - maxW / 2 - padding, midY - cajaH / 2, maxW + padding * 2, cajaH);
+
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = color1; 
-            ctx.fillText(texto1, midX, texto2 ? midY - fontSize/2 : midY);
-            
-            if (texto2) { 
-                ctx.fillStyle = color2; 
-                ctx.font = `bold ${fontSize*0.8}px Arial`; 
-                ctx.fillText(texto2, midX, midY + fontSize/2 + 2); 
+            ctx.fillStyle = color1;
+            ctx.fillText(texto1, midX, texto2 ? midY - fontSize / 2 : midY);
+
+            if (texto2) {
+                ctx.fillStyle = color2;
+                ctx.font = `bold ${fontSize * 0.8}px Arial`;
+                ctx.fillText(texto2, midX, midY + fontSize / 2 + 2);
             }
 
             if (seleccionada) {
-                // Puntos grandes y halo cuando están seleccionados
-                [c.p1, c.p2].forEach(p => { 
-                    ctx.fillStyle = 'rgba(0, 255, 0, 0.3)'; 
-                    ctx.beginPath(); ctx.arc(p.x, p.y, grosor * 8, 0, Math.PI * 2); ctx.fill(); 
-                    ctx.fillStyle = '#00ff00'; ctx.strokeStyle = 'white'; ctx.lineWidth = 3; 
-                    ctx.beginPath(); ctx.arc(p.x, p.y, grosor * 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); 
+                [c.p1, c.p2].forEach(p => {
+                    ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+                    ctx.beginPath(); ctx.arc(p.x, p.y, grosor * 8, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#00ff00'; ctx.strokeStyle = 'white'; ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, grosor * 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
                 });
             } else {
-                ctx.fillStyle = 'red'; [c.p1, c.p2].forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, grosor * 2, 0, Math.PI * 2); ctx.fill(); });
+                ctx.fillStyle = 'red';[c.p1, c.p2].forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, grosor * 2, 0, Math.PI * 2); ctx.fill(); });
             }
         }
 
@@ -478,14 +652,14 @@
             const radioRecorte = radioLupa / zoomLupa;
             ctx.drawImage(imagenCargada, imgX - radioRecorte, imgY - radioRecorte, radioRecorte * 2, radioRecorte * 2, lupaX - radioLupa, lupaY - radioLupa, radioLupa * 2, radioLupa * 2);
             ctx.restore();
-            
+
             let isLocked = isAnchoredVisually;
             let colorMira = isLocked ? '#00ff00' : 'red';
             let colorBorde = isLocked ? '#00ff00' : 'white';
             let colorBorde2 = isLocked ? '#005500' : '#333';
             let grosorBorde = isLocked ? 8 * cssToCanvas : 5 * cssToCanvas;
             ctx.beginPath(); ctx.arc(lupaX, lupaY, radioLupa, 0, Math.PI * 2);
-            ctx.strokeStyle = colorBorde; ctx.lineWidth = grosorBorde; ctx.stroke(); 
+            ctx.strokeStyle = colorBorde; ctx.lineWidth = grosorBorde; ctx.stroke();
             ctx.strokeStyle = colorBorde2; ctx.lineWidth = 2 * cssToCanvas; ctx.stroke();
             const tamMira = 20 * cssToCanvas; ctx.strokeStyle = colorMira; ctx.lineWidth = 2.5 * cssToCanvas;
             ctx.beginPath(); ctx.moveTo(lupaX - tamMira, lupaY); ctx.lineTo(lupaX - 6 * cssToCanvas, lupaY); ctx.stroke();
@@ -498,6 +672,7 @@
 
         function reiniciar() {
             cotas = []; tempPuntos = []; modoCota = 'dibujar'; bloquearClics = false; cotaSeleccionadaIdx = -1; calibracionMode = false; isFlattened = false; window.tempP1 = null;
+            historial = [];
             document.getElementById('btnAplanar').disabled = true;
             document.getElementById('btnAplanarToggle').classList.remove('activo');
             document.getElementById('panelAplanar').style.display = 'none';
@@ -511,10 +686,10 @@
             if (tempPuntos.length !== 4 || typeof cv === 'undefined') { alert("Error: OpenCV no está cargado o faltan 4 puntos."); return; }
             let input1 = parseFloat(document.getElementById('anchoReal').value);
             let input2 = parseFloat(document.getElementById('altoReal').value);
-            if(isNaN(input1) || isNaN(input2)) { alert("Introduce las dos medidas reales"); return; }
-            
+            if (isNaN(input1) || isNaN(input2)) { alert("Introduce las dos medidas reales"); return; }
+
             bloquearClics = true; document.getElementById('estado').innerText = "Calculando...";
-            
+
             setTimeout(() => {
                 try {
                     let tempCanvas = document.createElement('canvas');
@@ -523,7 +698,7 @@
                     let tempCtx = tempCanvas.getContext('2d');
                     tempCtx.drawImage(imagenCargada, 0, 0);
                     let src = cv.imread(tempCanvas);
-                    
+
                     let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [tempPuntos[0].x, tempPuntos[0].y, tempPuntos[1].x, tempPuntos[1].y, tempPuntos[2].x, tempPuntos[2].y, tempPuntos[3].x, tempPuntos[3].y]);
                     let distTop = Math.hypot(tempPuntos[1].x - tempPuntos[0].x, tempPuntos[1].y - tempPuntos[0].y);
                     let distLeft = Math.hypot(tempPuntos[3].x - tempPuntos[0].x, tempPuntos[3].y - tempPuntos[0].y);
@@ -546,10 +721,9 @@
                     let MFinal = new cv.Mat(); let tempMat = new cv.Mat();
                     let emptyMat1 = new cv.Mat();
                     let emptyMat2 = new cv.Mat();
-                    cv.gemm(TSegura, T, 1, emptyMat1, 0, tempMat); 
+                    cv.gemm(TSegura, T, 1, emptyMat1, 0, tempMat);
                     cv.gemm(tempMat, M, 1, emptyMat2, 0, MFinal);
-                    emptyMat1.delete(); 
-                    emptyMat2.delete();
+                    emptyMat1.delete(); emptyMat2.delete();
 
                     if (cotas.length > 0) {
                         let puntosArray = [];
@@ -558,37 +732,42 @@
                         let dstCotas = new cv.Mat();
                         cv.perspectiveTransform(srcCotas, dstCotas, MFinal);
                         for (let i = 0; i < cotas.length; i++) {
-                            cotas[i].p1.x = dstCotas.data32F[i*4]; cotas[i].p1.y = dstCotas.data32F[i*4+1];
-                            cotas[i].p2.x = dstCotas.data32F[i*4+2]; cotas[i].p2.y = dstCotas.data32F[i*4+3];
+                            cotas[i].p1.x = dstCotas.data32F[i * 4]; cotas[i].p1.y = dstCotas.data32F[i * 4 + 1];
+                            cotas[i].p2.x = dstCotas.data32F[i * 4 + 2]; cotas[i].p2.y = dstCotas.data32F[i * 4 + 3];
                             let distPx = Math.hypot(cotas[i].p2.x - cotas[i].p1.x, cotas[i].p2.y - cotas[i].p1.y);
                             cotas[i].calcCm = distPx / pixelesPorCm;
                         }
                         srcCotas.delete(); dstCotas.delete();
                     }
 
-                    let dst = new cv.Mat(); 
+                    let dst = new cv.Mat();
                     cv.warpPerspective(src, dst, MFinal, new cv.Size(nuevoAncho, nuevoAlto), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
                     canvas.width = nuevoAncho; canvas.height = nuevoAlto; cv.imshow(canvas, dst);
-                    let nuevaImagenData = canvas.toDataURL('image/png'); imagenCargada = new Image();
+
+                    // Generamos la nueva imagen ya aplanada
+                    let nuevaImagenData = canvas.toDataURL('image/png');
+                    imagenCargada = new Image();
                     imagenCargada.onload = () => {
                         isFlattened = true; bloquearClics = false; tempPuntos = []; calibracionMode = false;
                         document.getElementById('panelAplanar').style.display = 'none';
                         document.getElementById('btnAplanarToggle').classList.remove('activo');
                         document.getElementById('estado').innerText = "¡Aplanado y cotas recalculadas!";
                         actualizarResultado(); centrarImagen(); dibujar();
+                        // NO llamamos a guardarEstado() aquí, ya se guardó antes de llamar a esta función
                     };
                     imagenCargada.src = nuevaImagenData;
-                    
+
                     src.delete(); dst.delete(); M.delete(); MFinal.delete(); T.delete(); TSegura.delete(); tempMat.delete(); srcTri.delete(); dstTri.delete(); esquinasOriginales.delete(); esquinasTransformadas.delete();
                 } catch (err) {
                     alert("Error al aplanar: " + err.message);
                     document.getElementById('estado').innerText = "Error en el cálculo.";
                     console.error(err);
                 } finally {
-                    bloquearClics = false; 
+                    bloquearClics = false;
                 }
             }, 100);
         }
     </script>
 </body>
+
 </html>
