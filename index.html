@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PlanoSnap - v2.1 Pro</title>
+    <title>PlanoSnap - v3.0 Pro</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,6 +12,7 @@
             background: #f0f0f0;
             padding: 10px;
             margin: 0;
+            font-size: 14px;
         }
 
         #miCanvas {
@@ -35,17 +36,19 @@
         }
 
         button {
-            padding: 10px 12px;
+            padding: 8px 10px;
             margin: 2px;
-            font-size: 14px;
+            font-size: 13px;
             border: 1px solid #ccc;
             border-radius: 4px;
             background: #f9f9f9;
+            cursor: pointer;
         }
 
         button:disabled {
             background: #eee;
             color: #aaa;
+            cursor: default;
         }
 
         button.activo {
@@ -54,16 +57,37 @@
             border-color: #0056b3;
         }
 
-        input {
+        button.peligro {
+            background: #ffdddd;
+            color: #900;
+            border-color: #ff9999;
+        }
+
+        input,
+        textarea,
+        select {
             padding: 8px;
             margin: 5px;
-            font-size: 16px;
-            width: 80px;
+            font-size: 14px;
             box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100px;
+        }
+
+        textarea {
+            width: 100%;
+            resize: vertical;
+            min-height: 40px;
+            font-family: Arial, sans-serif;
         }
 
         #resultado {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             color: #333;
             margin-top: 10px;
@@ -80,7 +104,7 @@
             color: #555;
             margin-bottom: 10px;
             display: block;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         #loading {
@@ -121,23 +145,77 @@
         }
 
         .titulo-seccion {
-            font-size: 12px;
+            font-size: 11px;
             color: #666;
             margin-bottom: 5px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            display: block;
+        }
+
+        .mesa-header {
+            background: #2c3e50;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .mesa-header input {
+            background: #ecf0f1;
+            color: #333;
+            border: none;
+            font-weight: bold;
+        }
+
+        .vista-nav {
+            background: #34495e;
+            padding: 8px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            flex-wrap: wrap;
         }
     </style>
 </head>
 
 <body>
 
-    <h2>PlanoSnap v2.1</h2>
-    <div id="loading">Cargando motor IA...</div>
+    <div class="controles" style="max-width: 600px;">
+        <div class="mesa-header">
+            <div class="fila">
+                <input type="text" id="inputNombreMesa" placeholder="Nombre del Trabajo" style="flex: 1; width: auto;">
+                <button id="btnGuardarMesa" title="Guardar">💾 Guardar</button>
+                <button id="btnCargarMesa" title="Cargar">📂 Cargar</button>
+                <select id="selectMesaCargar" style="display:none; flex:1; font-size:13px; padding:8px; color: #333;">
+                    <option value="-1">-- Selecciona --</option>
+                </select>
+                <button id="btnCancelarCarga" style="display:none;" class="peligro">✖</button>
+                <button id="btnExportarMesa" title="Descargar proyecto como archivo">📤 Exportar</button>
+                <button id="btnImportarMesa" title="Cargar proyecto desde archivo">📥 Importar</button>
+                <input type="file" id="inputArchivoMesa" accept=".planosnap,.json" style="display: none;">
+            </div>
+        </div>
 
-    <div class="controles">
-        <span id="estado">Paso 1: Carga una foto.</span><br>
-        <input type="file" id="inputImagen" accept="image/*" style="margin-top:10px;">
+        <div class="vista-nav" id="navVistas">
+            <button id="btnVistaAnt" style="background:#2c3e50; color:white; border-color:white;">◀</button>
+            <div style="text-align:center; flex:1; min-width: 150px;">
+                <div id="txtVistaActual" style="font-weight:bold;">Sin vistas</div>
+                <input type="text" id="inputNombreVista" placeholder="Nombre Vista"
+                    style="width: 80%; text-align:center; font-size:12px; margin:2px;">
+                <textarea id="inputNotasVista" placeholder="Notas..." rows="1"
+                    style="font-size:11px; margin-top:4px;"></textarea>
+            </div>
+            <button id="btnVistaSig" style="background:#2c3e50; color:white; border-color:white;">▶</button>
+            <button id="btnAddVista" style="background:#27ae60; color:white; border:none; margin-left:5px;"
+                title="Añadir foto">+ Foto</button>
+        </div>
+
+        <span id="estado">Pulsa '+ Foto' para empezar.</span><br>
+        <input type="file" id="inputImagen" accept="image/*" style="display: none;">
 
         <div class="botonera" id="herramientas" style="display:none;">
             <div class="titulo-seccion">Herramientas</div>
@@ -145,7 +223,7 @@
                 <button id="btnDibujar" class="activo">📏 Dibujar</button>
                 <button id="btnSeleccionar">✏️ Editar</button>
                 <button id="btnDeshacer">⬅ Deshacer</button>
-                <button id="btnLimpiarTodo">🗑️ Borrar Todo</button>
+                <button id="btnLimpiarVista" class="peligro">🗑️ Borrar Vista</button>
             </div>
             <div class="fila" style="margin-top:5px;">
                 <button id="btnMover">✋ Mover</button>
@@ -157,8 +235,8 @@
             <div id="panelEdicion">
                 <strong>Cota Seleccionada:</strong><br>
                 <span>Yo digo (cm):</span> <input type="number" id="inputManual" step="0.1" placeholder="Manual">
-                <button id="btnAplicarManual">Aplicar Manual</button>
-                <button id="btnBorrarManual" style="background:#ffdddd; color:#900;">Borrar Manual</button>
+                <button id="btnAplicarManual">Aplicar</button>
+                <button id="btnBorrarManual" class="peligro">Borrar</button>
             </div>
 
             <div id="panelAplanar">
@@ -173,8 +251,8 @@
     </div>
 
     <canvas id="miCanvas" width="800" height="600"></canvas>
-
     <div id="resultado">Esperando...</div>
+    <div id="loading">Cargando motor IA...</div>
 
     <script async src="https://docs.opencv.org/4.x/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
 
@@ -182,59 +260,179 @@
         const canvas = document.getElementById('miCanvas');
         const ctx = canvas.getContext('2d');
 
-        let imagenCargada = null;
-        let bloquearClics = false;
-        let isFlattened = false;
+        let imagenCargada = null, bloquearClics = false, isFlattened = false;
+        let cotas = [], tempPuntos = [], modoCota = 'dibujar', cotaSeleccionadaIdx = -1, calibracionMode = false;
+        let isDraggingEndpoint = false, draggingCotaIdx = -1, draggingPointIdx = -1;
+        let scale = 1, offsetX = 0, offsetY = 0, modoMover = false, arrastrando = false, startDragX, startDragY;
+        let isPointing = false, currentImgX = 0, currentImgY = 0, currentScreenX = 0, currentScreenY = 0, pixelesPorCm = 1;
+        let lastValidLockedPoint = null, isAnchoredVisually = false, lockTimer = null, pointerIsDown = false;
+        const LOCK_DELAY = 500, MAX_HISTORIAL = 15;
 
-        let cotas = [];
-        let tempPuntos = [];
-        let modoCota = 'dibujar';
-        let cotaSeleccionadaIdx = -1;
-        let calibracionMode = false;
+        let mesaActual = { nombre: "Sin título", vistas: [] };
+        let vistaActualIdx = -1, historial = [];
+        let db;
+        function iniciarDB() {
+            let request = indexedDB.open("PlanoSnapDB", 1);
+            request.onupgradeneeded = e => e.target.result.createObjectStore("mesas", { keyPath: "id" });
+            request.onsuccess = e => db = e.target.result;
+        }
+        iniciarDB();
 
-        let isDraggingEndpoint = false;
-        let draggingCotaIdx = -1;
-        let draggingPointIdx = -1;
-        let scale = 1, offsetX = 0, offsetY = 0;
-        let modoMover = false, arrastrando = false, startDragX, startDragY;
-        let isPointing = false, currentImgX = 0, currentImgY = 0, currentScreenX = 0, currentScreenY = 0;
-        let pixelesPorCm = 1;
-
-        let lastValidLockedPoint = null;
-        let isAnchoredVisually = false;
-        let lockTimer = null;
-        const LOCK_DELAY = 500;
-        let pointerIsDown = false;
-
-        // --- SISTEMA DE HISTORIAL (DESHACER) CORREGIDO ---
-        let historial = [];
-        const MAX_HISTORIAL = 15;
-
-        function guardarEstado() {
-            // Solo guardamos datos lógicos y la ruta de la imagen, NUNCA el canvas renderizado.
-            historial.push({
-                cotas: JSON.parse(JSON.stringify(cotas)),
-                isFlattened: isFlattened,
-                pixelesPorCm: pixelesPorCm,
-                imgSrc: imagenCargada.src // Guardamos la fuente, no los píxeles
-            });
-            if (historial.length > MAX_HISTORIAL) historial.shift();
+        function sincronizarVistaActual() {
+            if (vistaActualIdx < 0 || !imagenCargada) return;
+            let v = mesaActual.vistas[vistaActualIdx];
+            v.nombre = document.getElementById('inputNombreVista').value || `Vista ${vistaActualIdx + 1}`;
+            v.notas = document.getElementById('inputNotasVista').value;
+            v.cotas = JSON.parse(JSON.stringify(cotas));
+            v.isFlattened = isFlattened;
+            v.pixelesPorCm = pixelesPorCm;
+            // PROHIBIDO usar toDataURL aquí para no quemar las cotas
+        }
+        function cargarVistaEnCanvas(idx) {
+            if (idx < 0 || idx >= mesaActual.vistas.length) return;
+            vistaActualIdx = idx; // <-- ESTA ES LA LÍNEA QUE FALTABA
+            bloquearClics = true; document.getElementById('estado').innerText = "Cargando vista...";
+            let v = mesaActual.vistas[idx], imgTemp = new Image();
+            imgTemp.onload = () => {
+                imagenCargada = imgTemp; canvas.width = imgTemp.width; canvas.height = imgTemp.height;
+                cotas = JSON.parse(JSON.stringify(v.cotas)); isFlattened = v.isFlattened; pixelesPorCm = v.pixelesPorCm;
+                document.getElementById('inputNombreVista').value = v.nombre;
+                document.getElementById('inputNotasVista').value = v.notas || "";
+                historial = []; guardarEstado(); cotaSeleccionadaIdx = -1; tempPuntos = []; calibracionMode = false;
+                document.getElementById('panelAplanar').style.display = 'none'; document.getElementById('btnAplanarToggle').classList.remove('activo');
+                mostrarPanelEdicion(-1); document.getElementById('herramientas').style.display = 'block';
+                centrarImagen(); dibujar(); bloquearClics = false; actualizarUIVistas();
+                document.getElementById('estado').innerText = `Modo Dibujo. (${v.nombre})`;
+            };
+            imgTemp.src = v.imagenSrc;
         }
 
-        function onOpenCvReady() { document.getElementById('loading').style.display = 'none'; }
+        function actualizarUIVistas() {
+            document.getElementById('txtVistaActual').innerText = vistaActualIdx >= 0 ? `${vistaActualIdx + 1} / ${mesaActual.vistas.length}` : "Sin vistas";
+        }
 
-        document.getElementById('inputImagen').addEventListener('change', (e) => {
+        document.getElementById('btnAddVista').addEventListener('click', () => { sincronizarVistaActual(); document.getElementById('inputImagen').click(); });
+
+        document.getElementById('inputImagen').addEventListener('change', e => {
             const file = e.target.files[0]; if (!file) return;
             const img = new Image();
             img.onload = () => {
+                // 1. Convertimos a DataURL para que se guarde bien en la base de datos
+                let tc = document.createElement('canvas'); tc.width = img.width; tc.height = img.height;
+                tc.getContext('2d').drawImage(img, 0, 0);
+                let imgDataUrl = tc.toDataURL('image/jpeg', 0.8);
+
+                // 2. Guardamos la vista con la foto LIMPIA
+                mesaActual.vistas.push({ id: Date.now(), nombre: `Vista ${mesaActual.vistas.length + 1}`, notas: "", imagenSrc: imgDataUrl, isFlattened: false, pixelesPorCm: 1, cotas: [] });
+                vistaActualIdx = mesaActual.vistas.length - 1;
+
                 imagenCargada = img; canvas.width = img.width; canvas.height = img.height;
-                centrarImagen(); reiniciar();
-                document.getElementById('herramientas').style.display = 'block';
-                document.getElementById('estado').innerText = "Modo Dibujo. Toca dos puntos.";
-                guardarEstado(); // Estado inicial
+                cotas = []; tempPuntos = []; modoCota = 'dibujar'; bloquearClics = false; cotaSeleccionadaIdx = -1; calibracionMode = false; isFlattened = false; window.tempP1 = null; historial = [];
+                guardarEstado();
+                document.getElementById('inputNombreMesa').value = mesaActual.nombre;
+                document.getElementById('inputNombreVista').value = mesaActual.vistas[vistaActualIdx].nombre;
+                document.getElementById('inputNotasVista').value = "";
+                document.getElementById('herramientas').style.display = 'block'; document.getElementById('btnAplanar').disabled = true;
+                document.getElementById('btnAplanarToggle').classList.remove('activo'); document.getElementById('panelAplanar').style.display = 'none'; document.getElementById('panelEdicion').style.display = 'none';
+                centrarImagen(); actualizarUIVistas(); dibujar(); document.getElementById('estado').innerText = "Modo Dibujo. Toca dos puntos.";
             };
-            img.src = URL.createObjectURL(file);
+            img.src = URL.createObjectURL(file); e.target.value = "";
         });
+        document.getElementById('btnVistaAnt').addEventListener('click', () => { if (vistaActualIdx > 0) { sincronizarVistaActual(); cargarVistaEnCanvas(vistaActualIdx - 1); } });
+        document.getElementById('btnVistaSig').addEventListener('click', () => { if (vistaActualIdx < mesaActual.vistas.length - 1) { sincronizarVistaActual(); cargarVistaEnCanvas(vistaActualIdx + 1); } });
+
+        document.getElementById('btnGuardarMesa').addEventListener('click', () => {
+            if (!mesaActual.vistas.length) { alert("No hay vistas."); return; }
+            sincronizarVistaActual(); mesaActual.nombre = document.getElementById('inputNombreMesa').value || "Sin título";
+            mesaActual.id = mesaActual.id || Date.now();
+            db.transaction("mesas", "readwrite").objectStore("mesas").put(mesaActual);
+            document.getElementById('estado').innerText = `¡Mesa '${mesaActual.nombre}' guardada!`;
+        });
+
+        document.getElementById('btnCargarMesa').addEventListener('click', () => {
+            db.transaction("mesas", "readonly").objectStore("mesas").getAll().onsuccess = e => {
+                let mesas = e.target.result; if (!mesas.length) { alert("No hay trabajos."); return; }
+                let sel = document.getElementById('selectMesaCargar'); sel.innerHTML = '<option value="-1">-- Selecciona --</option>';
+                mesas.forEach((m, i) => { let o = document.createElement('option'); o.value = i; o.textContent = `${m.nombre} (${m.vistas.length} vistas)`; sel.appendChild(o); });
+                document.getElementById('btnCargarMesa').style.display = 'none'; sel.style.display = 'block'; document.getElementById('btnCancelarCarga').style.display = 'block';
+            };
+        });
+
+        document.getElementById('selectMesaCargar').addEventListener('change', e => {
+            let idx = parseInt(e.target.value); if (idx < 0) return;
+            db.transaction("mesas", "readonly").objectStore("mesas").getAll().onsuccess = ev => {
+                let mesas = ev.target.result; if (idx >= 0 && idx < mesas.length) { mesaActual = mesas[idx]; vistaActualIdx = 0; document.getElementById('inputNombreMesa').value = mesaActual.nombre; cargarVistaEnCanvas(0); }
+                ocultarSelectorCarga();
+            };
+        });
+        document.getElementById('btnCancelarCarga').addEventListener('click', ocultarSelectorCarga);
+        function ocultarSelectorCarga() { document.getElementById('btnCargarMesa').style.display = 'block'; document.getElementById('selectMesaCargar').style.display = 'none'; document.getElementById('btnCancelarCarga').style.display = 'none'; }
+
+
+        // --- SISTEMA DE EXPORTACIÓN / IMPORTACIÓN DE ARCHIVOS ---
+        document.getElementById('btnExportarMesa').addEventListener('click', () => {
+            if (!mesaActual.vistas.length) { alert("No hay vistas que exportar."); return; }
+            sincronizarVistaActual(); // Aseguramos que la vista actual está guardada en memoria
+
+            // Convertimos el objeto "mesa" a texto JSON
+            let datosJSON = JSON.stringify(mesaActual);
+
+            // Creamos un archivo virtual para descargar
+            let blob = new Blob([datosJSON], { type: "application/json" });
+            let url = URL.createObjectURL(blob);
+
+            let a = document.createElement('a');
+            a.href = url;
+            // Ponemos un nombre bonito al archivo, sin espacios ni acentos raros
+            let nombreLimpio = mesaActual.nombre.replace(/[^a-zA-Z0-9]/g, '_');
+            a.download = `${nombreLimpio}.planosnap`;
+
+            document.body.appendChild(a);
+            a.click(); // Forzamos la descarga
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            document.getElementById('estado').innerText = `¡Proyecto descargado! (${(blob.size / 1024 / 1024).toFixed(2)} MB)`;
+        });
+
+        document.getElementById('btnImportarMesa').addEventListener('click', () => {
+            document.getElementById('inputArchivoMesa').click();
+        });
+
+        document.getElementById('inputArchivoMesa').addEventListener('change', (e) => {
+            const file = e.target.files[0]; if (!file) return;
+
+            let reader = new FileReader();
+            reader.onload = function (ev) {
+                try {
+                    // Leemos el texto y lo convertimos de vuelta a objeto
+                    let mesaImportada = JSON.parse(ev.target.result);
+
+                    if (!mesaImportada.vistas || !mesaImportada.vistas.length) {
+                        alert("El archivo no parece un proyecto de PlanoSnap válido.");
+                        return;
+                    }
+
+                    // Cargamos la mesa importada
+                    mesaActual = mesaImportada;
+                    vistaActualIdx = 0;
+                    document.getElementById('inputNombreMesa').value = mesaActual.nombre;
+
+                    cargarVistaEnCanvas(0);
+                    document.getElementById('estado').innerText = `¡Proyecto "${mesaActual.nombre}" importado correctamente!`;
+                } catch (error) {
+                    alert("Error al leer el archivo: " + error.message);
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = ""; // Reseteamos por si queremos cargar el mismo archivo otra vez
+        });
+
+
+        document.getElementById('btnLimpiarVista').addEventListener('click', () => { if (!confirm("¿Borrar cotas de esta vista?") || !cotas.length) return; guardarEstado(); cotas = []; cotaSeleccionadaIdx = -1; window.tempP1 = null; document.getElementById('panelEdicion').style.display = 'none'; actualizarResultado(); dibujar(); });
+
+        function guardarEstado() { if (vistaActualIdx < 0) return; historial.push({ cotas: JSON.parse(JSON.stringify(cotas)), isFlattened, pixelesPorCm, imgSrc: imagenCargada.src }); if (historial.length > MAX_HISTORIAL) historial.shift(); }
+        function onOpenCvReady() { document.getElementById('loading').style.display = 'none'; }
 
         document.getElementById('btnMover').addEventListener('click', function () { modoMover = !modoMover; this.classList.toggle('activo'); canvas.style.cursor = modoMover ? 'grab' : 'crosshair'; });
         document.getElementById('btnZoomIn').addEventListener('click', () => { scale *= 1.3; dibujar(); });
@@ -243,528 +441,235 @@
         document.getElementById('btnAplanarToggle').addEventListener('click', function () {
             calibracionMode = !calibracionMode; this.classList.toggle('activo');
             document.getElementById('panelAplanar').style.display = calibracionMode ? 'block' : 'none';
-            if (calibracionMode) {
-                tempPuntos = [];
-                document.getElementById('estado').innerText = "MODO CALIBRACIÓN: Marca 4 esquinas.";
-            } else {
-                tempPuntos = [];
-                document.getElementById('btnAplanar').disabled = true;
-                document.getElementById('estado').innerText = "Modo Dibujo.";
-            }
+            if (calibracionMode) { tempPuntos = []; document.getElementById('estado').innerText = "MODO CALIBRACIÓN: Marca 4 esquinas."; } else { tempPuntos = []; document.getElementById('btnAplanar').disabled = true; document.getElementById('estado').innerText = "Modo Dibujo."; }
             dibujar();
         });
 
         document.getElementById('btnDibujar').addEventListener('click', function () {
-            calibracionMode = false; document.getElementById('panelAplanar').style.display = 'none';
-            document.getElementById('btnAplanarToggle').classList.remove('activo');
-            modoCota = 'dibujar'; this.classList.add('activo');
-            document.getElementById('btnSeleccionar').classList.remove('activo');
-            document.getElementById('panelEdicion').style.display = 'none';
-            cotaSeleccionadaIdx = -1; canvas.style.cursor = 'crosshair';
-            tempPuntos = []; window.tempP1 = null;
-            document.getElementById('estado').innerText = "Modo Dibujo. Toca inicio y fin.";
-            dibujar();
+            calibracionMode = false; document.getElementById('panelAplanar').style.display = 'none'; document.getElementById('btnAplanarToggle').classList.remove('activo');
+            modoCota = 'dibujar'; this.classList.add('activo'); document.getElementById('btnSeleccionar').classList.remove('activo');
+            document.getElementById('panelEdicion').style.display = 'none'; cotaSeleccionadaIdx = -1; canvas.style.cursor = 'crosshair'; tempPuntos = []; window.tempP1 = null;
+            document.getElementById('estado').innerText = "Modo Dibujo. Toca inicio y fin."; dibujar();
         });
 
         document.getElementById('btnSeleccionar').addEventListener('click', function () {
-            calibracionMode = false; document.getElementById('panelAplanar').style.display = 'none';
-            document.getElementById('btnAplanarToggle').classList.remove('activo');
-            modoCota = 'seleccionar'; this.classList.add('activo');
-            document.getElementById('btnDibujar').classList.remove('activo');
-            cotaSeleccionadaIdx = -1;
-            document.getElementById('estado').innerText = "Modo Edición. Toca una línea de cota.";
-            canvas.style.cursor = 'pointer'; dibujar();
+            calibracionMode = false; document.getElementById('panelAplanar').style.display = 'none'; document.getElementById('btnAplanarToggle').classList.remove('activo');
+            modoCota = 'seleccionar'; this.classList.add('activo'); document.getElementById('btnDibujar').classList.remove('activo');
+            cotaSeleccionadaIdx = -1; document.getElementById('estado').innerText = "Modo Edición."; canvas.style.cursor = 'pointer'; dibujar();
         });
 
-        document.getElementById('btnAplicarManual').addEventListener('click', () => {
-            if (cotaSeleccionadaIdx >= 0) {
-                guardarEstado(); // <-- ANTES de modificar
-                const val = document.getElementById('inputManual').value;
-                cotas[cotaSeleccionadaIdx].manualCm = val === "" ? null : parseFloat(val);
-                mostrarPanelEdicion(cotaSeleccionadaIdx);
-                actualizarResultado(); dibujar();
-            }
-        });
-
-        document.getElementById('btnBorrarManual').addEventListener('click', () => {
-            if (cotaSeleccionadaIdx >= 0) {
-                guardarEstado(); // <-- ANTES de modificar
-                cotas[cotaSeleccionadaIdx].manualCm = null;
-                mostrarPanelEdicion(cotaSeleccionadaIdx);
-                actualizarResultado(); dibujar();
-            }
-        });
+        document.getElementById('btnAplicarManual').addEventListener('click', () => { if (cotaSeleccionadaIdx >= 0) { guardarEstado(); cotas[cotaSeleccionadaIdx].manualCm = document.getElementById('inputManual').value === "" ? null : parseFloat(document.getElementById('inputManual').value); mostrarPanelEdicion(cotaSeleccionadaIdx); actualizarResultado(); dibujar(); } });
+        document.getElementById('btnBorrarManual').addEventListener('click', () => { if (cotaSeleccionadaIdx >= 0) { guardarEstado(); cotas[cotaSeleccionadaIdx].manualCm = null; mostrarPanelEdicion(cotaSeleccionadaIdx); actualizarResultado(); dibujar(); } });
 
         document.getElementById('btnDeshacer').addEventListener('click', () => {
-            // 1. Si estamos marcando puntos de calibración, los borramos
-            if (calibracionMode && tempPuntos.length > 0) {
-                tempPuntos.pop(); dibujar();
-                document.getElementById('btnAplanar').disabled = tempPuntos.length !== 4;
-                return;
-            }
-
-            // 2. NUEVO: Si estamos dibujando y ya pusimos un punto, lo cancelamos sin tocar el historial
-            if (modoCota === 'dibujar' && window.tempP1) {
-                window.tempP1 = null;
-                document.getElementById('estado').innerText = "Primer punto cancelado. Toca de nuevo.";
-                dibujar();
-                return;
-            }
-
-            // 3. Si no hay temporales, deshacemos del historial real
-            if (historial.length === 0) {
-                document.getElementById('estado').innerText = "Nada que deshacer.";
-                return;
-            }
-
-            bloquearClics = true;
-            const estadoAnterior = historial.pop();
-
-            // 1. Restaurar variables lógicas
-            cotas = estadoAnterior.cotas;
-            isFlattened = estadoAnterior.isFlattened;
-            pixelesPorCm = estadoAnterior.pixelesPorCm;
-            cotaSeleccionadaIdx = -1;
-            mostrarPanelEdicion(-1);
-
-            // 2. Si la imagen base cambió (ej. deshacer un aplanar)
-            if (imagenCargada.src !== estadoAnterior.imgSrc) {
-                let imgTemp = new Image();
-                imgTemp.onload = () => {
-                    imagenCargada = imgTemp;
-                    canvas.width = imgTemp.width;
-                    canvas.height = imgTemp.height;
-                    bloquearClics = false;
-                    actualizarResultado();
-                    centrarImagen();
-                    dibujar();
-                    document.getElementById('estado').innerText = "¡Acción deshecha!";
-                };
-                imgTemp.src = estadoAnterior.imgSrc;
-            } else {
-                // 3. Si la imagen es la misma (ej. deshacer crear cota o mover punto)
-                bloquearClics = false;
-                actualizarResultado();
-                dibujar();
-                document.getElementById('estado').innerText = "¡Acción deshecha!";
-            }
+            if (calibracionMode && tempPuntos.length > 0) { tempPuntos.pop(); dibujar(); document.getElementById('btnAplanar').disabled = tempPuntos.length !== 4; return; }
+            if (modoCota === 'dibujar' && window.tempP1) { window.tempP1 = null; document.getElementById('estado').innerText = "Punto cancelado."; dibujar(); return; }
+            if (!historial.length) { document.getElementById('estado').innerText = "Nada que deshacer."; return; }
+            bloquearClics = true; let ant = historial.pop(); cotas = ant.cotas; isFlattened = ant.isFlattened; pixelesPorCm = ant.pixelesPorCm; cotaSeleccionadaIdx = -1; mostrarPanelEdicion(-1);
+            if (imagenCargada.src !== ant.imgSrc) { let img = new Image(); img.onload = () => { imagenCargada = img; canvas.width = img.width; canvas.height = img.height; bloquearClics = false; actualizarResultado(); centrarImagen(); dibujar(); document.getElementById('estado').innerText = "¡Deshecho!"; }; img.src = ant.imgSrc; }
+            else { bloquearClics = false; actualizarResultado(); dibujar(); document.getElementById('estado').innerText = "¡Deshecho!"; }
         });
 
-        document.getElementById('btnLimpiarTodo').addEventListener('click', () => {
-            if (cotas.length === 0) return;
-            guardarEstado(); // <-- ANTES de modificar
-            cotas = []; tempPuntos = []; cotaSeleccionadaIdx = -1; window.tempP1 = null;
-            document.getElementById('panelEdicion').style.display = 'none';
-            actualizarResultado(); dibujar();
-        });
+        document.getElementById('btnAplanar').addEventListener('click', () => { guardarEstado(); aplanarPlano(); });
 
-        document.getElementById('btnAplanar').addEventListener('click', () => {
-            guardarEstado(); // <-- ANTES de aplanar
-            aplanarPlano();  // Ya no guarda estado dentro
-        });
-
-        function mostrarPanelEdicion(idx) {
-            cotaSeleccionadaIdx = idx;
-            const panel = document.getElementById('panelEdicion');
-            if (idx >= 0) {
-                const c = cotas[idx];
-                document.getElementById('inputManual').value = c.manualCm !== null ? c.manualCm : '';
-                panel.style.display = 'block';
-            } else { panel.style.display = 'none'; }
-            actualizarResultado();
-        }
+        function mostrarPanelEdicion(idx) { cotaSeleccionadaIdx = idx; let p = document.getElementById('panelEdicion'); if (idx >= 0) { document.getElementById('inputManual').value = cotas[idx].manualCm !== null ? cotas[idx].manualCm : ''; p.style.display = 'block'; } else { p.style.display = 'none'; } actualizarResultado(); }
 
         function actualizarResultado() {
-            if (cotas.length === 0) { document.getElementById('resultado').innerText = "Sin cotas."; return; }
-            let texto = cotas.map((c, i) => {
-                let val = "N/A";
-                if (c.manualCm !== null) val = c.manualCm.toFixed(2) + " (M)";
-                else if (isFlattened) val = c.calcCm.toFixed(2);
-                let sel = (i === cotaSeleccionadaIdx) ? ">>> " : "";
-                let selFin = (i === cotaSeleccionadaIdx) ? " <<<" : "";
-                return `${sel}C${i + 1}: ${val}${selFin}`;
+            if (!cotas.length) { document.getElementById('resultado').innerText = "Sin cotas."; return; }
+            document.getElementById('resultado').innerText = cotas.map((c, i) => {
+                let v = "N/A";
+                if (c.manualCm !== null) v = c.manualCm.toFixed(2) + " (M)";
+                else if (isFlattened && c.calcCm > 0) v = c.calcCm.toFixed(2);
+                let s = i === cotaSeleccionadaIdx ? ">>> " : ""; let sf = i === cotaSeleccionadaIdx ? " <<<" : "";
+                return `${s}C${i + 1}: ${v}${sf}`;
             }).join(" | ");
-            document.getElementById('resultado').innerText = texto;
         }
+        function getImgCoords(e) { let r = canvas.getBoundingClientRect(), cx = canvas.width / r.width, cy = canvas.height / r.height, sx = (e.clientX - r.left) * cx, sy = (e.clientY - r.top) * cy; return { imgX: (sx - offsetX) / scale, imgY: (sy - offsetY) / scale, screenX: sx, screenY: sy }; }
 
-        function getImgCoords(e) {
-            const rect = canvas.getBoundingClientRect();
-            const cssScaleX = canvas.width / rect.width; const cssScaleY = canvas.height / rect.height;
-            const screenX = (e.clientX - rect.left) * cssScaleX; const screenY = (e.clientY - rect.top) * cssScaleY;
-            return { imgX: (screenX - offsetX) / scale, imgY: (screenY - offsetY) / scale, screenX, screenY };
-        }
-
-        canvas.addEventListener('pointerdown', (e) => {
-            if (!imagenCargada || bloquearClics) return;
-            pointerIsDown = true; lastValidLockedPoint = null; isAnchoredVisually = false;
-
+        canvas.addEventListener('pointerdown', e => {
+            if (!imagenCargada || bloquearClics) return; pointerIsDown = true; lastValidLockedPoint = null; isAnchoredVisually = false;
             if (modoMover) { arrastrando = true; startDragX = e.clientX - offsetX; startDragY = e.clientY - offsetY; canvas.style.cursor = 'grabbing'; return; }
-
-            if (calibracionMode && tempPuntos.length < 4) {
-                activarLupa(getImgCoords(e)); return;
-            }
-
+            if (calibracionMode && tempPuntos.length < 4) { activarLupa(getImgCoords(e)); return; }
             if (modoCota === 'seleccionar') {
-                const coords = getImgCoords(e);
-                const umbralLinea = 40 / scale;
-
-                let idxLineaCercana = -1, distMinLinea = Infinity;
-                for (let i = 0; i < cotas.length; i++) {
-                    const c = cotas[i];
-                    const dist = distanciaPuntoASegmento(coords.imgX, coords.imgY, c.p1.x, c.p1.y, c.p2.x, c.p2.y);
-                    if (dist < distMinLinea) { distMinLinea = dist; idxLineaCercana = i; }
-                }
-
-                if (distMinLinea <= umbralLinea) {
-                    if (idxLineaCercana === cotaSeleccionadaIdx) {
-                        const c = cotas[idxLineaCercana];
-                        const d1 = Math.hypot(coords.imgX - c.p1.x, coords.imgY - c.p1.y);
-                        const d2 = Math.hypot(coords.imgX - c.p2.x, coords.imgY - c.p2.y);
-                        iniciarArrastreExtremo(idxLineaCercana, d1 <= d2 ? 0 : 1, coords);
-                    } else {
-                        seleccionarCotaConCoords(coords.imgX, coords.imgY);
-                    }
-                } else {
-                    if (cotaSeleccionadaIdx !== -1) {
-                        cotaSeleccionadaIdx = -1;
-                        mostrarPanelEdicion(-1);
-                        document.getElementById('estado').innerText = "Modo Edición. Toca una línea de cota.";
-                        dibujar();
-                    } else {
-                        activarLupa(coords);
-                    }
-                }
-                return;
+                let co = getImgCoords(e), ul = 40 / scale, idx = -1, dm = Infinity;
+                for (let i = 0; i < cotas.length; i++) { let d = distanciaPuntoASegmento(co.imgX, co.imgY, cotas[i].p1.x, cotas[i].p1.y, cotas[i].p2.x, cotas[i].p2.y); if (d < dm) { dm = d; idx = i; } }
+                if (dm <= ul) { if (idx === cotaSeleccionadaIdx) { let c = cotas[idx], d1 = Math.hypot(co.imgX - c.p1.x, co.imgY - c.p1.y), d2 = Math.hypot(co.imgX - c.p2.x, co.imgY - c.p2.y); iniciarArrastreExtremo(idx, d1 <= d2 ? 0 : 1, co); } else seleccionarCotaConCoords(co.imgX, co.imgY); }
+                else { if (cotaSeleccionadaIdx !== -1) { cotaSeleccionadaIdx = -1; mostrarPanelEdicion(-1); dibujar(); } else activarLupa(co); } return;
             }
             if (modoCota === 'dibujar') activarLupa(getImgCoords(e));
         });
 
-        function activarLupa(coords) {
-            isPointing = true; clearTimeout(lockTimer);
-            currentImgX = coords.imgX; currentImgY = coords.imgY;
-            currentScreenX = coords.screenX; currentScreenY = coords.screenY;
-            dibujar();
-        }
+        function activarLupa(c) { isPointing = true; clearTimeout(lockTimer); currentImgX = c.imgX; currentImgY = c.imgY; currentScreenX = c.screenX; currentScreenY = c.screenY; dibujar(); }
+        function iniciarArrastreExtremo(i, p, c) { isDraggingEndpoint = true; draggingCotaIdx = i; draggingPointIdx = p; activarLupa(c); mostrarPanelEdicion(i); document.getElementById('estado').innerText = "Moviendo punto..."; }
 
-        function iniciarArrastreExtremo(cotaIdx, puntoIdx, coords) {
-            isDraggingEndpoint = true; draggingCotaIdx = cotaIdx; draggingPointIdx = puntoIdx;
-            activarLupa(coords); mostrarPanelEdicion(cotaIdx);
-            document.getElementById('estado').innerText = "Moviendo punto... suelta para fijar.";
-        }
-
-        canvas.addEventListener('pointermove', (e) => {
+        canvas.addEventListener('pointermove', e => {
             if (arrastrando) { offsetX = e.clientX - startDragX; offsetY = e.clientY - startDragY; dibujar(); return; }
             if (!pointerIsDown) return;
             if (isPointing || isDraggingEndpoint) {
-                const coords = getImgCoords(e);
-                currentImgX = coords.imgX; currentImgY = coords.imgY;
-                currentScreenX = coords.screenX; currentScreenY = coords.screenY;
+                let c = getImgCoords(e); currentImgX = c.imgX; currentImgY = c.imgY; currentScreenX = c.screenX; currentScreenY = c.screenY;
                 clearTimeout(lockTimer); isAnchoredVisually = false;
-                lockTimer = setTimeout(() => {
-                    lastValidLockedPoint = { x: currentImgX, y: currentImgY, sX: currentScreenX, sY: currentScreenY };
-                    isAnchoredVisually = true; dibujar();
-                }, LOCK_DELAY);
-                if (isDraggingEndpoint) actualizarVisualmenteCota();
+                lockTimer = setTimeout(() => { lastValidLockedPoint = { x: currentImgX, y: currentImgY, sX: currentScreenX, sY: currentScreenY }; isAnchoredVisually = true; dibujar(); }, LOCK_DELAY);
+                if (isDraggingEndpoint) { let co = cotas[draggingCotaIdx]; if (draggingPointIdx === 0) { co.p1.x = currentImgX; co.p1.y = currentImgY; } else { co.p2.x = currentImgX; co.p2.y = currentImgY; } co.calcCm = Math.hypot(co.p2.x - co.p1.x, co.p2.y - co.p1.y) / pixelesPorCm; actualizarResultado(); }
                 dibujar();
             }
         });
 
-        function actualizarVisualmenteCota() {
-            const c = cotas[draggingCotaIdx];
-            if (draggingPointIdx === 0) { c.p1.x = currentImgX; c.p1.y = currentImgY; }
-            else { c.p2.x = currentImgX; c.p2.y = currentImgY; }
-            const distPx = Math.hypot(c.p2.x - c.p1.x, c.p2.y - c.p1.y);
-            c.calcCm = distPx / pixelesPorCm;
-            actualizarResultado();
-        }
-
-        canvas.addEventListener('pointerup', (e) => {
-            pointerIsDown = false;
-            if (arrastrando) { arrastrando = false; canvas.style.cursor = modoMover ? 'grab' : 'crosshair'; return; }
-
-            let finalX = lastValidLockedPoint ? lastValidLockedPoint.x : currentImgX;
-            let finalY = lastValidLockedPoint ? lastValidLockedPoint.y : currentImgY;
-
+        canvas.addEventListener('pointerup', e => {
+            pointerIsDown = false; if (arrastrando) { arrastrando = false; canvas.style.cursor = modoMover ? 'grab' : 'crosshair'; return; }
+            let fx = lastValidLockedPoint ? lastValidLockedPoint.x : currentImgX, fy = lastValidLockedPoint ? lastValidLockedPoint.y : currentImgY;
             if (isDraggingEndpoint) {
-                guardarEstado(); // <-- ANTES de modificar el punto final
-
-                const c = cotas[draggingCotaIdx];
-                if (draggingPointIdx === 0) { c.p1.x = finalX; c.p1.y = finalY; } else { c.p2.x = finalX; c.p2.y = finalY; }
-                const distPx = Math.hypot(c.p2.x - c.p1.x, c.p2.y - c.p1.y);
-                c.calcCm = distPx / pixelesPorCm;
-                let idxTemp = draggingCotaIdx;
-                isDraggingEndpoint = false; draggingCotaIdx = -1; draggingPointIdx = -1; isPointing = false; lastValidLockedPoint = null; isAnchoredVisually = false;
-                mostrarPanelEdicion(idxTemp); actualizarResultado(); dibujar();
-                document.getElementById('estado').innerText = "Punto fijado. Toca la línea para mover otro.";
-                return;
+                guardarEstado(); let c = cotas[draggingCotaIdx]; if (draggingPointIdx === 0) { c.p1.x = fx; c.p1.y = fy; } else { c.p2.x = fx; c.p2.y = fy; } c.calcCm = Math.hypot(c.p2.x - c.p1.x, c.p2.y - c.p1.y) / pixelesPorCm;
+                let ti = draggingCotaIdx; isDraggingEndpoint = false; draggingCotaIdx = -1; draggingPointIdx = -1; isPointing = false; lastValidLockedPoint = null; isAnchoredVisually = false;
+                mostrarPanelEdicion(ti); actualizarResultado(); dibujar(); document.getElementById('estado').innerText = "Punto fijado."; return;
             }
-
             if (isPointing) {
                 isPointing = false; lastValidLockedPoint = null; isAnchoredVisually = false;
-
-                if (calibracionMode) {
-                    tempPuntos.push({ x: finalX, y: finalY }); dibujar();
-                    if (tempPuntos.length === 4) { document.getElementById('btnAplanar').disabled = false; document.getElementById('estado').innerText = "¡4 puntos listos! Pulsa 'Calcular y Aplanar'."; }
-                }
+                if (calibracionMode) { tempPuntos.push({ x: fx, y: fy }); dibujar(); if (tempPuntos.length === 4) { document.getElementById('btnAplanar').disabled = false; document.getElementById('estado').innerText = "¡4 puntos listos!"; } }
                 else if (modoCota === 'dibujar') {
-                    if (!window.tempP1) {
-                        window.tempP1 = { x: finalX, y: finalY };
-                        document.getElementById('estado').innerText = "Toca el segundo punto.";
-                    } else {
-                        guardarEstado(); // <-- ANTES de crear la cota
-
-                        let nuevaCota = { p1: window.tempP1, p2: { x: finalX, y: finalY }, calcCm: 0, manualCm: null };
-                        if (isFlattened) {
-                            let distPx = Math.hypot(nuevaCota.p2.x - nuevaCota.p1.x, nuevaCota.p2.y - nuevaCota.p1.y);
-                            nuevaCota.calcCm = distPx / pixelesPorCm;
-                        }
-                        cotas.push(nuevaCota);
-                        window.tempP1 = null;
-                        document.getElementById('estado').innerText = "Cota creada.";
-                        actualizarResultado(); dibujar();
-                    }
+                    if (!window.tempP1) { window.tempP1 = { x: fx, y: fy }; document.getElementById('estado').innerText = "Toca segundo punto."; }
+                    else { guardarEstado(); let nc = { p1: window.tempP1, p2: { x: fx, y: fy }, calcCm: 0, manualCm: null }; if (isFlattened) nc.calcCm = Math.hypot(nc.p2.x - nc.p1.x, nc.p2.y - nc.p1.y) / pixelesPorCm; cotas.push(nc); window.tempP1 = null; document.getElementById('estado').innerText = "Cota creada."; actualizarResultado(); dibujar(); }
                 }
             }
         });
 
-        function seleccionarCotaConCoords(imgX, imgY) {
-            const umbral = 40 / scale;
-            cotaSeleccionadaIdx = -1;
-            for (let i = 0; i < cotas.length; i++) {
-                const c = cotas[i];
-                const dist = distanciaPuntoASegmento(imgX, imgY, c.p1.x, c.p1.y, c.p2.x, c.p2.y);
-                if (dist < umbral) { cotaSeleccionadaIdx = i; break; }
-            }
-            document.getElementById('estado').innerText = cotaSeleccionadaIdx >= 0 ? "Cota seleccionada. Toca de nuevo para mover." : "Modo Edición. Toca una línea de cota.";
-            mostrarPanelEdicion(cotaSeleccionadaIdx); dibujar();
-        }
-
-        function distanciaPuntoASegmento(px, py, x1, y1, x2, y2) {
-            const A = px - x1, B = py - y1, C = x2 - x1, D = y2 - y1;
-            const dot = A * C + B * D, lenSq = C * C + D * D;
-            let param = lenSq !== 0 ? dot / lenSq : -1;
-            let xx, yy;
-            if (param < 0) { xx = x1; yy = y1; } else if (param > 1) { xx = x2; yy = y2; } else { xx = x1 + param * C; yy = y1 + param * D; }
-            return Math.hypot(px - xx, py - yy);
-        }
-
-        function centrarImagen() {
-            scale = 1; offsetX = 0; offsetY = 0;
-            let ratio = Math.min((window.innerWidth - 20) / canvas.width, (window.innerHeight * 0.6) / canvas.height);
-            canvas.style.width = (canvas.width * ratio) + 'px'; canvas.style.height = (canvas.height * ratio) + 'px';
-        }
+        function seleccionarCotaConCoords(x, y) { let u = 40 / scale; cotaSeleccionadaIdx = -1; for (let i = 0; i < cotas.length; i++) { if (distanciaPuntoASegmento(x, y, cotas[i].p1.x, cotas[i].p1.y, cotas[i].p2.x, cotas[i].p2.y) < u) { cotaSeleccionadaIdx = i; break; } } document.getElementById('estado').innerText = cotaSeleccionadaIdx >= 0 ? "Cota seleccionada." : "Modo Edición."; mostrarPanelEdicion(cotaSeleccionadaIdx); dibujar(); }
+        function distanciaPuntoASegmento(px, py, x1, y1, x2, y2) { let A = px - x1, B = py - y1, C = x2 - x1, D = y2 - y1, d = A * C + B * D, l = C * C + D * D, p = l !== 0 ? d / l : -1, xx, yy; if (p < 0) { xx = x1; yy = y1; } else if (p > 1) { xx = x2; yy = y2; } else { xx = x1 + p * C; yy = y1 + p * D; } return Math.hypot(px - xx, py - yy); }
+        function centrarImagen() { scale = 1; offsetX = 0; offsetY = 0; let r = Math.min((window.innerWidth - 20) / canvas.width, (window.innerHeight * 0.5) / canvas.height); canvas.style.width = (canvas.width * r) + 'px'; canvas.style.height = (canvas.height * r) + 'px'; }
 
         function dibujar() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.save(); ctx.translate(offsetX, offsetY); ctx.scale(scale, scale);
+            ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.save(); ctx.translate(offsetX, offsetY); ctx.scale(scale, scale);
             if (imagenCargada) ctx.drawImage(imagenCargada, 0, 0, canvas.width, canvas.height);
-
-            if (tempPuntos.length > 0) {
-                ctx.strokeStyle = 'yellow'; ctx.lineWidth = Math.max(2, canvas.width / 300); ctx.fillStyle = 'yellow';
-                ctx.beginPath(); ctx.moveTo(tempPuntos[0].x, tempPuntos[0].y);
-                for (let i = 1; i < tempPuntos.length; i++) ctx.lineTo(tempPuntos[i].x, tempPuntos[i].y);
-                ctx.closePath(); ctx.stroke();
-                tempPuntos.forEach((p, i) => { ctx.beginPath(); ctx.arc(p.x, p.y, ctx.lineWidth * 3, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'black'; ctx.font = `bold ${ctx.lineWidth * 6}px Arial`; ctx.fillText(i + 1, p.x - 10, p.y + ctx.lineWidth * 2); ctx.fillStyle = 'yellow'; });
-            }
-
-            if (window.tempP1 && modoCota === 'dibujar' && !isDraggingEndpoint) {
-                ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(window.tempP1.x, window.tempP1.y, 8, 0, Math.PI * 2); ctx.fill();
-            }
-
+            if (tempPuntos.length > 0) { ctx.strokeStyle = 'yellow'; ctx.lineWidth = Math.max(2, canvas.width / 300); ctx.fillStyle = 'yellow'; ctx.beginPath(); ctx.moveTo(tempPuntos[0].x, tempPuntos[0].y); for (let i = 1; i < tempPuntos.length; i++) ctx.lineTo(tempPuntos[i].x, tempPuntos[i].y); ctx.closePath(); ctx.stroke(); tempPuntos.forEach((p, i) => { ctx.beginPath(); ctx.arc(p.x, p.y, ctx.lineWidth * 3, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'black'; ctx.font = `bold ${ctx.lineWidth * 6}px Arial`; ctx.fillText(i + 1, p.x - 10, p.y + ctx.lineWidth * 2); ctx.fillStyle = 'yellow'; }); }
+            if (window.tempP1 && modoCota === 'dibujar' && !isDraggingEndpoint) { ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(window.tempP1.x, window.tempP1.y, 8, 0, Math.PI * 2); ctx.fill(); }
             cotas.forEach((c, i) => dibujarCota(c, i === cotaSeleccionadaIdx));
             ctx.restore();
-
-            if (isPointing) {
-                let dIX = (isAnchoredVisually && lastValidLockedPoint) ? lastValidLockedPoint.x : currentImgX;
-                let dIY = (isAnchoredVisually && lastValidLockedPoint) ? lastValidLockedPoint.y : currentImgY;
-                let dSX = (isAnchoredVisually && lastValidLockedPoint) ? lastValidLockedPoint.sX : currentScreenX;
-                let dSY = (isAnchoredVisually && lastValidLockedPoint) ? lastValidLockedPoint.sY : currentScreenY;
-                dibujarLupa(dIX, dIY, dSX, dSY);
-            }
+            if (isPointing) { let dIX = (isAnchoredVisually && lastValidLockedPoint) ? lastValidLockedPoint.x : currentImgX, dIY = (isAnchoredVisually && lastValidLockedPoint) ? lastValidLockedPoint.y : currentImgY, dSX = (isAnchoredVisually && lastValidLockedPoint) ? lastValidLockedPoint.sX : currentScreenX, dSY = (isAnchoredVisually && lastValidLockedPoint) ? lastValidLockedPoint.sY : currentScreenY; dibujarLupa(dIX, dIY, dSX, dSY); }
         }
 
-        function dibujarCota(c, seleccionada) {
-            const grosor = Math.max(3, canvas.width / 200);
-            ctx.strokeStyle = seleccionada ? '#00ff00' : 'red'; ctx.lineWidth = seleccionada ? grosor * 1.5 : grosor;
+        function dibujarCota(c, sel) {
+            let g = Math.max(3, canvas.width / 200);
+            ctx.strokeStyle = sel ? '#00ff00' : 'red';
+            ctx.lineWidth = sel ? g * 1.5 : g;
             ctx.beginPath(); ctx.moveTo(c.p1.x, c.p1.y); ctx.lineTo(c.p2.x, c.p2.y); ctx.stroke();
 
-            const midX = (c.p1.x + c.p2.x) / 2; const midY = (c.p1.y + c.p2.y) / 2;
-            const fontSize = Math.max(14, canvas.width / 45);
+            let mx = (c.p1.x + c.p2.x) / 2, my = (c.p1.y + c.p2.y) / 2;
 
-            let texto1 = "", texto2 = "";
-            let color1 = "#cc0000", color2 = "#0055cc";
+            let angle = Math.atan2(c.p2.y - c.p1.y, c.p2.x - c.p1.x);
+            let isHorizontal = Math.abs(Math.cos(angle)) > 0.7;
 
-            if (isFlattened) {
-                texto1 = c.calcCm.toFixed(2) + " cm (Foto)";
-                color1 = "#cc0000";
+            let rect = canvas.getBoundingClientRect();
+            let relacionPantallaLienzo = canvas.width / rect.width;
+            let tamanoEnPantalla = 16;
+            let fs = (tamanoEnPantalla * relacionPantallaLienzo) / scale;
+            let p = (4 * relacionPantallaLienzo) / scale;
+            let offsetDesplazamiento = (10 * relacionPantallaLienzo) / scale;
+
+            // NUEVA LÓGICA DE TEXTO LIMPIA
+            let t1 = "", t2 = "", c1 = "#888", c2 = "#0055cc";
+            let tieneFoto = isFlattened && c.calcCm > 0;
+            let tieneManual = c.manualCm !== null;
+
+            if (tieneManual && tieneFoto) {
+                t1 = c.calcCm.toFixed(2) + " cm (Foto)"; c1 = "#cc0000";
+                t2 = c.manualCm.toFixed(2) + " cm (Manual)";
+            } else if (tieneFoto) {
+                t1 = c.calcCm.toFixed(2) + " cm (Foto)"; c1 = "#cc0000";
+            } else if (tieneManual) {
+                t1 = c.manualCm.toFixed(2) + " cm (Manual)"; c1 = "#0055cc";
             } else {
-                texto1 = "N/A (Sin aplanar)";
-                color1 = "#888888";
+                t1 = "N/A"; c1 = "#888"; // Un solo N/A discreto
             }
 
-            if (c.manualCm !== null) {
-                texto2 = c.manualCm.toFixed(2) + " cm (Manual)";
+            ctx.font = `bold ${fs}px Arial`;
+            let m1 = ctx.measureText(t1), m2 = t2 ? ctx.measureText(t2) : { width: 0 };
+            let ch = (fs * (t2 ? 2 : 1)) + (p * 2) + (2 * relacionPantallaLienzo) / scale;
+            let mw = Math.max(m1.width, m2.width);
+
+            let textX = mx, textY = my;
+
+            if (isHorizontal) {
+                textY -= (ch / 2) + offsetDesplazamiento;
+            } else {
+                textX += (mw / 2) + offsetDesplazamiento;
             }
 
-            ctx.font = `bold ${fontSize}px Arial`;
-            const metrics1 = ctx.measureText(texto1);
-            const metrics2 = texto2 ? ctx.measureText(texto2) : { width: 0 };
-            const padding = 4;
-            const cajaH = (fontSize * (texto2 ? 2 : 1)) + (padding * 2) + 2;
-            let maxW = Math.max(metrics1.width, metrics2.width);
-
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.fillRect(midX - maxW / 2 - padding, midY - cajaH / 2, maxW + padding * 2, cajaH);
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.fillRect(textX - mw / 2 - p, textY - ch / 2, mw + p * 2, ch);
 
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = color1;
-            ctx.fillText(texto1, midX, texto2 ? midY - fontSize / 2 : midY);
+            ctx.fillStyle = c1;
+            ctx.fillText(t1, textX, t2 ? textY - fs / 2 : textY);
 
-            if (texto2) {
-                ctx.fillStyle = color2;
-                ctx.font = `bold ${fontSize * 0.8}px Arial`;
-                ctx.fillText(texto2, midX, midY + fontSize / 2 + 2);
+            if (t2) {
+                ctx.fillStyle = c2;
+                ctx.font = `bold ${fs * 0.8}px Arial`;
+                ctx.fillText(t2, textX, textY + fs / 2 + (2 * relacionPantallaLienzo) / scale);
             }
 
-            if (seleccionada) {
-                [c.p1, c.p2].forEach(p => {
-                    ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
-                    ctx.beginPath(); ctx.arc(p.x, p.y, grosor * 8, 0, Math.PI * 2); ctx.fill();
+            if (sel) {
+                [c.p1, c.p2].forEach(pt => {
+                    ctx.fillStyle = 'rgba(0,255,0,0.3)'; ctx.beginPath(); ctx.arc(pt.x, pt.y, g * 8, 0, Math.PI * 2); ctx.fill();
                     ctx.fillStyle = '#00ff00'; ctx.strokeStyle = 'white'; ctx.lineWidth = 3;
-                    ctx.beginPath(); ctx.arc(p.x, p.y, grosor * 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                    ctx.beginPath(); ctx.arc(pt.x, pt.y, g * 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
                 });
             } else {
-                ctx.fillStyle = 'red';[c.p1, c.p2].forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, grosor * 2, 0, Math.PI * 2); ctx.fill(); });
+                ctx.fillStyle = 'red';[c.p1, c.p2].forEach(pt => { ctx.beginPath(); ctx.arc(pt.x, pt.y, g * 2, 0, Math.PI * 2); ctx.fill(); });
             }
         }
-
-        function dibujarLupa(imgX, imgY, screenX, screenY) {
-            const rect = canvas.getBoundingClientRect();
-            const cssToCanvas = canvas.width / rect.width;
-            const radioLupa = 80 * cssToCanvas; const zoomLupa = 2.5;
-            let lupaX = screenX; let lupaY = 120 * cssToCanvas;
-            if (lupaX < radioLupa + 10) lupaX = radioLupa + 10;
-            if (lupaX > canvas.width - radioLupa - 10) lupaX = canvas.width - radioLupa - 10;
-            ctx.save();
-            ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 15 * cssToCanvas;
-            ctx.beginPath(); ctx.arc(lupaX, lupaY, radioLupa, 0, Math.PI * 2); ctx.clip();
-            ctx.shadowColor = 'transparent'; ctx.fillStyle = '#000'; ctx.fillRect(lupaX - radioLupa, lupaY - radioLupa, radioLupa * 2, radioLupa * 2);
-            const radioRecorte = radioLupa / zoomLupa;
-            ctx.drawImage(imagenCargada, imgX - radioRecorte, imgY - radioRecorte, radioRecorte * 2, radioRecorte * 2, lupaX - radioLupa, lupaY - radioLupa, radioLupa * 2, radioLupa * 2);
-            ctx.restore();
-
-            let isLocked = isAnchoredVisually;
-            let colorMira = isLocked ? '#00ff00' : 'red';
-            let colorBorde = isLocked ? '#00ff00' : 'white';
-            let colorBorde2 = isLocked ? '#005500' : '#333';
-            let grosorBorde = isLocked ? 8 * cssToCanvas : 5 * cssToCanvas;
-            ctx.beginPath(); ctx.arc(lupaX, lupaY, radioLupa, 0, Math.PI * 2);
-            ctx.strokeStyle = colorBorde; ctx.lineWidth = grosorBorde; ctx.stroke();
-            ctx.strokeStyle = colorBorde2; ctx.lineWidth = 2 * cssToCanvas; ctx.stroke();
-            const tamMira = 20 * cssToCanvas; ctx.strokeStyle = colorMira; ctx.lineWidth = 2.5 * cssToCanvas;
-            ctx.beginPath(); ctx.moveTo(lupaX - tamMira, lupaY); ctx.lineTo(lupaX - 6 * cssToCanvas, lupaY); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(lupaX + 6 * cssToCanvas, lupaY); ctx.lineTo(lupaX + tamMira, lupaY); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(lupaX, lupaY - tamMira); ctx.lineTo(lupaX, lupaY - 6 * cssToCanvas); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(lupaX, lupaY + 6 * cssToCanvas); ctx.lineTo(lupaX, lupaY + tamMira); ctx.stroke();
-            ctx.fillStyle = colorMira; ctx.beginPath(); ctx.arc(lupaX, lupaY, 2.5 * cssToCanvas, 0, Math.PI * 2); ctx.fill();
-            if (isLocked) { ctx.font = `bold ${14 * cssToCanvas}px Arial`; ctx.fillStyle = '#00ff00'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText("ANCLADO", lupaX, lupaY + tamMira + 15 * cssToCanvas); }
-        }
-
-        function reiniciar() {
-            cotas = []; tempPuntos = []; modoCota = 'dibujar'; bloquearClics = false; cotaSeleccionadaIdx = -1; calibracionMode = false; isFlattened = false; window.tempP1 = null;
-            historial = [];
-            document.getElementById('btnAplanar').disabled = true;
-            document.getElementById('btnAplanarToggle').classList.remove('activo');
-            document.getElementById('panelAplanar').style.display = 'none';
-            document.getElementById('panelEdicion').style.display = 'none';
-            document.getElementById('estado').innerText = "Modo Dibujo.";
-            document.getElementById('resultado').innerText = "Sin cotas.";
-            centrarImagen(); dibujar();
+        function dibujarLupa(ix, iy, sx, sy) {
+            let r = canvas.getBoundingClientRect(), cc = canvas.width / r.width, rl = 80 * cc, z = 2.5, lx = sx, ly = 120 * cc;
+            if (lx < rl + 10) lx = rl + 10; if (lx > canvas.width - rl - 10) lx = canvas.width - rl - 10;
+            ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 15 * cc; ctx.beginPath(); ctx.arc(lx, ly, rl, 0, Math.PI * 2); ctx.clip();
+            ctx.shadowColor = 'transparent'; ctx.fillStyle = '#000'; ctx.fillRect(lx - rl, ly - rl, rl * 2, rl * 2);
+            let rr = rl / z; ctx.drawImage(imagenCargada, ix - rr, iy - rr, rr * 2, rr * 2, lx - rl, ly - rl, rl * 2, rl * 2); ctx.restore();
+            let il = isAnchoredVisually, cm = il ? '#00ff00' : 'red', cb = il ? '#00ff00' : 'white', cb2 = il ? '#005500' : '#333', gb = il ? 8 * cc : 5 * cc;
+            ctx.beginPath(); ctx.arc(lx, ly, rl, 0, Math.PI * 2); ctx.strokeStyle = cb; ctx.lineWidth = gb; ctx.stroke(); ctx.strokeStyle = cb2; ctx.lineWidth = 2 * cc; ctx.stroke();
+            let tm = 20 * cc; ctx.strokeStyle = cm; ctx.lineWidth = 2.5 * cc;
+            ctx.beginPath(); ctx.moveTo(lx - tm, ly); ctx.lineTo(lx - 6 * cc, ly); ctx.stroke(); ctx.beginPath(); ctx.moveTo(lx + 6 * cc, ly); ctx.lineTo(lx + tm, ly); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(lx, ly - tm); ctx.lineTo(lx, ly - 6 * cc); ctx.stroke(); ctx.beginPath(); ctx.moveTo(lx, ly + 6 * cc); ctx.lineTo(lx, ly + tm); ctx.stroke();
+            ctx.fillStyle = cm; ctx.beginPath(); ctx.arc(lx, ly, 2.5 * cc, 0, Math.PI * 2); ctx.fill();
+            if (il) { ctx.font = `bold ${14 * cc}px Arial`; ctx.fillStyle = '#00ff00'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText("ANCLADO", lx, ly + tm + 15 * cc); }
         }
 
         function aplanarPlano() {
-            if (tempPuntos.length !== 4 || typeof cv === 'undefined') { alert("Error: OpenCV no está cargado o faltan 4 puntos."); return; }
-            let input1 = parseFloat(document.getElementById('anchoReal').value);
-            let input2 = parseFloat(document.getElementById('altoReal').value);
-            if (isNaN(input1) || isNaN(input2)) { alert("Introduce las dos medidas reales"); return; }
-
+            if (tempPuntos.length !== 4 || typeof cv === 'undefined') { alert("Faltan 4 puntos o OpenCV."); return; }
+            let i1 = parseFloat(document.getElementById('anchoReal').value), i2 = parseFloat(document.getElementById('altoReal').value);
+            if (isNaN(i1) || isNaN(i2)) { alert("Introduce medidas reales."); return; }
             bloquearClics = true; document.getElementById('estado').innerText = "Calculando...";
-
             setTimeout(() => {
                 try {
-                    let tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = imagenCargada.width;
-                    tempCanvas.height = imagenCargada.height;
-                    let tempCtx = tempCanvas.getContext('2d');
-                    tempCtx.drawImage(imagenCargada, 0, 0);
-                    let src = cv.imread(tempCanvas);
-
-                    let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [tempPuntos[0].x, tempPuntos[0].y, tempPuntos[1].x, tempPuntos[1].y, tempPuntos[2].x, tempPuntos[2].y, tempPuntos[3].x, tempPuntos[3].y]);
-                    let distTop = Math.hypot(tempPuntos[1].x - tempPuntos[0].x, tempPuntos[1].y - tempPuntos[0].y);
-                    let distLeft = Math.hypot(tempPuntos[3].x - tempPuntos[0].x, tempPuntos[3].y - tempPuntos[0].y);
-                    if (distTop > distLeft && input1 < input2) { let t = input1; input1 = input2; input2 = t; }
-                    else if (distTop < distLeft && input1 > input2) { let t = input1; input1 = input2; input2 = t; }
-                    let escalaIdeal = (window.innerWidth - 40) / input1;
-                    let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, input1 * escalaIdeal, 0, input1 * escalaIdeal, input2 * escalaIdeal, 0, input2 * escalaIdeal]);
-                    let M = cv.getPerspectiveTransform(srcTri, dstTri);
-                    let esquinasOriginales = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, src.cols, 0, src.cols, src.rows, 0, src.rows]);
-                    let esquinasTransformadas = new cv.Mat(); cv.perspectiveTransform(esquinasOriginales, esquinasTransformadas, M);
-                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                    for (let i = 0; i < 4; i++) { let x = esquinasTransformadas.data32F[i * 2]; let y = esquinasTransformadas.data32F[i * 2 + 1]; if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
-                    let anchoTotalAbsoluto = Math.ceil(maxX - minX); let altoTotalAbsoluto = Math.ceil(maxY - minY);
-                    let MAX_PIXELS = 4096; let safeScale = 1.0;
-                    if (anchoTotalAbsoluto > MAX_PIXELS || altoTotalAbsoluto > MAX_PIXELS) { let rA = MAX_PIXELS / anchoTotalAbsoluto; let rH = MAX_PIXELS / altoTotalAbsoluto; safeScale = Math.min(rA, rH); }
-                    let nuevoAncho = Math.ceil(anchoTotalAbsoluto * safeScale); let nuevoAlto = Math.ceil(altoTotalAbsoluto * safeScale);
-                    pixelesPorCm = escalaIdeal * safeScale;
-                    let T = cv.matFromArray(3, 3, cv.CV_64FC1, [1, 0, -minX, 0, 1, -minY, 0, 0, 1]);
-                    let TSegura = cv.matFromArray(3, 3, cv.CV_64FC1, [safeScale, 0, 0, 0, safeScale, 0, 0, 0, 1]);
-                    let MFinal = new cv.Mat(); let tempMat = new cv.Mat();
-                    let emptyMat1 = new cv.Mat();
-                    let emptyMat2 = new cv.Mat();
-                    cv.gemm(TSegura, T, 1, emptyMat1, 0, tempMat);
-                    cv.gemm(tempMat, M, 1, emptyMat2, 0, MFinal);
-                    emptyMat1.delete(); emptyMat2.delete();
-
-                    if (cotas.length > 0) {
-                        let puntosArray = [];
-                        cotas.forEach(c => { puntosArray.push(c.p1.x, c.p1.y, c.p2.x, c.p2.y); });
-                        let srcCotas = cv.matFromArray(cotas.length * 2, 1, cv.CV_32FC2, puntosArray);
-                        let dstCotas = new cv.Mat();
-                        cv.perspectiveTransform(srcCotas, dstCotas, MFinal);
-                        for (let i = 0; i < cotas.length; i++) {
-                            cotas[i].p1.x = dstCotas.data32F[i * 4]; cotas[i].p1.y = dstCotas.data32F[i * 4 + 1];
-                            cotas[i].p2.x = dstCotas.data32F[i * 4 + 2]; cotas[i].p2.y = dstCotas.data32F[i * 4 + 3];
-                            let distPx = Math.hypot(cotas[i].p2.x - cotas[i].p1.x, cotas[i].p2.y - cotas[i].p1.y);
-                            cotas[i].calcCm = distPx / pixelesPorCm;
-                        }
-                        srcCotas.delete(); dstCotas.delete();
-                    }
-
-                    let dst = new cv.Mat();
-                    cv.warpPerspective(src, dst, MFinal, new cv.Size(nuevoAncho, nuevoAlto), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-                    canvas.width = nuevoAncho; canvas.height = nuevoAlto; cv.imshow(canvas, dst);
-
-                    // Generamos la nueva imagen ya aplanada
-                    let nuevaImagenData = canvas.toDataURL('image/png');
-                    imagenCargada = new Image();
+                    let tc = document.createElement('canvas'); tc.width = imagenCargada.width; tc.height = imagenCargada.height; let tctx = tc.getContext('2d'); tctx.drawImage(imagenCargada, 0, 0); let src = cv.imread(tc);
+                    let st = cv.matFromArray(4, 1, cv.CV_32FC2, [tempPuntos[0].x, tempPuntos[0].y, tempPuntos[1].x, tempPuntos[1].y, tempPuntos[2].x, tempPuntos[2].y, tempPuntos[3].x, tempPuntos[3].y]);
+                    let dt = Math.hypot(tempPuntos[1].x - tempPuntos[0].x, tempPuntos[1].y - tempPuntos[0].y), dl = Math.hypot(tempPuntos[3].x - tempPuntos[0].x, tempPuntos[3].y - tempPuntos[0].y);
+                    if (dt > dl && i1 < i2) { let t = i1; i1 = i2; i2 = t; } else if (dt < dl && i1 > i2) { let t = i1; i1 = i2; i2 = t; }
+                    let ei = (window.innerWidth - 40) / i1, dtr = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, i1 * ei, 0, i1 * ei, i2 * ei, 0, i2 * ei]);
+                    let M = cv.getPerspectiveTransform(st, dtr), eo = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, src.cols, 0, src.cols, src.rows, 0, src.rows]), et = new cv.Mat(); cv.perspectiveTransform(eo, et, M);
+                    let mnx = Infinity, mny = Infinity, mxx = -Infinity, mxy = -Infinity;
+                    for (let i = 0; i < 4; i++) { let x = et.data32F[i * 2], y = et.data32F[i * 2 + 1]; if (x < mnx) mnx = x; if (x > mxx) mxx = x; if (y < mny) mny = y; if (y > mxy) mxy = y; }
+                    let at = Math.ceil(mxx - mnx), aalt = Math.ceil(mxy - mny), mp = 4096, ss = 1.0;
+                    if (at > mp || aalt > mp) { ss = Math.min(mp / at, mp / aalt); }
+                    let na = Math.ceil(at * ss), nalt = Math.ceil(aalt * ss); pixelesPorCm = ei * ss;
+                    let T = cv.matFromArray(3, 3, cv.CV_64FC1, [1, 0, -mnx, 0, 1, -mny, 0, 0, 1]), TS = cv.matFromArray(3, 3, cv.CV_64FC1, [ss, 0, 0, 0, ss, 0, 0, 0, 1]);
+                    let MF = new cv.Mat(), tm = new cv.Mat(), em1 = new cv.Mat(), em2 = new cv.Mat();
+                    cv.gemm(TS, T, 1, em1, 0, tm); cv.gemm(tm, M, 1, em2, 0, MF); em1.delete(); em2.delete();
+                    if (cotas.length > 0) { let pa = []; cotas.forEach(c => { pa.push(c.p1.x, c.p1.y, c.p2.x, c.p2.y); }); let sc = cv.matFromArray(cotas.length * 2, 1, cv.CV_32FC2, pa), dc = new cv.Mat(); cv.perspectiveTransform(sc, dc, MF); for (let i = 0; i < cotas.length; i++) { cotas[i].p1.x = dc.data32F[i * 4]; cotas[i].p1.y = dc.data32F[i * 4 + 1]; cotas[i].p2.x = dc.data32F[i * 4 + 2]; cotas[i].p2.y = dc.data32F[i * 4 + 3]; cotas[i].calcCm = Math.hypot(cotas[i].p2.x - cotas[i].p1.x, cotas[i].p2.y - cotas[i].p1.y) / pixelesPorCm; } sc.delete(); dc.delete(); }
+                    let dst = new cv.Mat(); cv.warpPerspective(src, dst, MF, new cv.Size(na, nalt), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+                    canvas.width = na; canvas.height = nalt; cv.imshow(canvas, dst); let nid = canvas.toDataURL('image/png'); imagenCargada = new Image();
                     imagenCargada.onload = () => {
                         isFlattened = true; bloquearClics = false; tempPuntos = []; calibracionMode = false;
                         document.getElementById('panelAplanar').style.display = 'none';
                         document.getElementById('btnAplanarToggle').classList.remove('activo');
-                        document.getElementById('estado').innerText = "¡Aplanado y cotas recalculadas!";
-                        actualizarResultado(); centrarImagen(); dibujar();
-                        // NO llamamos a guardarEstado() aquí, ya se guardó antes de llamar a esta función
-                    };
-                    imagenCargada.src = nuevaImagenData;
 
-                    src.delete(); dst.delete(); M.delete(); MFinal.delete(); T.delete(); TSegura.delete(); tempMat.delete(); srcTri.delete(); dstTri.delete(); esquinasOriginales.delete(); esquinasTransformadas.delete();
-                } catch (err) {
-                    alert("Error al aplanar: " + err.message);
-                    document.getElementById('estado').innerText = "Error en el cálculo.";
-                    console.error(err);
-                } finally {
-                    bloquearClics = false;
-                }
+                        // IMPORTANTE: Guardar la imagen aplanada LIMPIA en la vista actual
+                        if (vistaActualIdx >= 0) {
+                            mesaActual.vistas[vistaActualIdx].imagenSrc = nid;
+                        }
+
+                        document.getElementById('estado').innerText = "¡Aplanado!";
+                        actualizarResultado(); centrarImagen(); dibujar();
+                    };
+                    imagenCargada.src = nid; src.delete(); dst.delete(); M.delete(); MF.delete(); T.delete(); TS.delete(); tm.delete(); st.delete(); dtr.delete(); eo.delete(); et.delete();
+                } catch (err) { alert("Error: " + err.message); document.getElementById('estado').innerText = "Error."; } finally { bloquearClics = false; }
             }, 100);
         }
     </script>
