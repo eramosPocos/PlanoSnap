@@ -2,7 +2,7 @@
 
 Proyecto independiente `PlanoSnap`.
 
-Esta carpeta ya está creada y lista para que desarrolles la aplicación.
+//Esta carpeta ya está creada y lista para que desarrolles la aplicación.
 
 ## Siguientes pasos
 
