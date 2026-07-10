@@ -110,6 +110,7 @@
             <div class="fila">
                 <input type="text" id="inputNombreMesa" placeholder="Nombre del Trabajo" style="flex: 1; width: auto;">
                 <button id="btnGuardarMesa" title="Guardar">💾</button>
+                <button id="btnGuardarComoMesa" title="Guardar como">💾+</button>
                 <button id="btnCargarMesa" title="Cargar">📂</button>
                 <select id="selectMesaCargar" style="display:none; flex:1; font-size:13px; padding:8px; color: #333;"><option value="-1">-- Selecciona --</option></select>
                 <button id="btnCancelarCarga" style="display:none;" class="peligro">✖</button>
@@ -225,11 +226,28 @@
 
         document.getElementById('btnGuardarMesa').addEventListener('click', () => { if (!mesaActual.vistas.length) { alert("No hay vistas."); return; } sincronizarVistaActual(); mesaActual.nombre = document.getElementById('inputNombreMesa').value || "Sin título"; mesaActual.id = mesaActual.id || Date.now(); db.transaction("mesas", "readwrite").objectStore("mesas").put(mesaActual); cambiosSinGuardar = false; document.getElementById('estado').innerText = `¡Mesa guardada!`; });
 
+        // Guardar como (duplicar trabajo)
+        document.getElementById('btnGuardarComoMesa').addEventListener('click', () => {
+            if (!mesaActual.vistas.length) { alert("No hay vistas."); return; }
+            let nuevoNombre = prompt("Nuevo nombre para el trabajo:", mesaActual.nombre);
+            if (!nuevoNombre || nuevoNombre.trim() === "") return;
+            sincronizarVistaActual();
+            let nuevaMesa = JSON.parse(JSON.stringify(mesaActual));
+            nuevaMesa.nombre = nuevoNombre;
+            nuevaMesa.id = Date.now();
+            db.transaction("mesas", "readwrite").objectStore("mesas").put(nuevaMesa).onsuccess = () => {
+                document.getElementById('inputNombreMesa').value = nuevoNombre;
+                mesaActual = nuevaMesa;
+                cambiosSinGuardar = false;
+                document.getElementById('estado').innerText = `¡Guardado como "${nuevoNombre}"!`;
+            };
+        });
+
         document.getElementById('btnCargarMesa').onclick = () => { cargarListaMesas(); };
         document.getElementById('selectMesaCargar').addEventListener('change', e => { let i = parseInt(e.target.value); if (i < 0) return; db.transaction("mesas", "readonly").objectStore("mesas").getAll().onsuccess = ev => { let m = ev.target.result; if (i >= 0 && i < m.length) { mesaActual = m[i]; vistaActualIdx = 0; document.getElementById('inputNombreMesa').value = m[i].nombre; cargarVistaEnCanvas(0); } ocultarSelectorCarga(); }; });
         document.getElementById('btnCancelarCarga').addEventListener('click', ocultarSelectorCarga);
         document.getElementById('btnBorrarMesa').addEventListener('click', () => { let i = parseInt(document.getElementById('selectMesaCargar').value); if (i < 0) { alert("Selecciona un proyecto."); return; } if (!confirm("¿Borrar proyecto?")) return; db.transaction("mesas", "readonly").objectStore("mesas").getAll().onsuccess = e => { let m = e.target.result; if (i >= 0 && i < m.length) { let b = m[i]; db.transaction("mesas", "readwrite").objectStore("mesas").delete(b.id).onsuccess = () => { if (mesaActual.id === b.id) { mesaActual = { nombre: "Sin título", vistas: [] }; vistaActualIdx = -1; imagenCargada = null; cotas = []; angulos = []; historial = []; cambiosSinGuardar = false; ctx.clearRect(0, 0, canvas.width, canvas.height); document.getElementById('herramientas').style.display = 'none'; document.getElementById('inputNombreMesa').value = ""; actualizarUIVistas(); actualizarResultado(); } document.getElementById('estado').innerText = "Proyecto borrado."; cargarListaMesas(); } }; }; });
-        function ocultarSelectorCarga() { document.getElementById('btnCargarMesa').style.display = 'block'; document.getElementById('selectMesaCargar').style.display = 'none'; document.getElementById('btnCancelarCarga').style.display = 'none'; document.getElementById('btnBorrarMesa').style.display = 'none'; }
+        function ocultarSelectorCarga() { document.getElementById('btnCargarMesa').style.display = 'block'; document.getElementById('selectMesaCargar').style.display = 'none'; document.getElementById('btnCancelarCarga').style.display = 'none'; }
         function cargarListaMesas() { db.transaction("mesas", "readonly").objectStore("mesas").getAll().onsuccess = e => { let m = e.target.result; if (!m.length) { alert("No hay trabajos."); return; } let s = document.getElementById('selectMesaCargar'); s.innerHTML = '<option value="-1">-- Selecciona --</option>'; m.forEach((x, i) => { let o = document.createElement('option'); o.value = i; o.textContent = `${x.nombre} (${x.vistas.length} vistas)`; s.appendChild(o); }); document.getElementById('btnCargarMesa').style.display = 'none'; s.style.display = 'block'; document.getElementById('btnCancelarCarga').style.display = 'block'; document.getElementById('btnBorrarMesa').style.display = 'block'; }; }
 
         document.getElementById('btnExportarMesa').addEventListener('click', () => { if (!mesaActual.vistas.length) return; sincronizarVistaActual(); let b = new Blob([JSON.stringify(mesaActual)], { type: "application/json" }), u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = `${mesaActual.nombre.replace(/[^a-zA-Z0-9]/g, '_')}.planosnap`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u); cambiosSinGuardar = false; document.getElementById('estado').innerText = `¡Exportado!`; });
