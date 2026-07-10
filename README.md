@@ -2,7 +2,7 @@
 
 Proyecto independiente `PlanoSnap`.
 
-//Esta carpeta ya está creada y lista para que desarrolles la aplicación.
+Programa para tomar notas, medidas y cotas de objetos y espacios.
 
 ## Siguientes pasos
 
