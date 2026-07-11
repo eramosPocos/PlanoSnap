@@ -5,6 +5,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PlanoSnap - v3.2 Pro</title>
+    <style>
+        .version {
+            position: fixed;
+            bottom: 5px;
+            left: 5px;
+            font-size: 10px;
+            color: #666;
+            background: rgba(255,255,255,0.7);
+            padding: 2px 5px;
+            border-radius: 3px;
+            z-index: 1000;
+        }
+    </style>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2c3e50">
     <script>
@@ -236,7 +249,7 @@
         let mesaActual = { nombre: "Sin título", vistas: [] }; let vistaActualIdx = -1, historial = []; let db;
         function iniciarDB() { let r = indexedDB.open("PlanoSnapDB", 1); r.onupgradeneeded = e => e.target.result.createObjectStore("mesas", { keyPath: "id" }); r.onsuccess = e => db = e.target.result; } iniciarDB();
 
-        function sincronizarVistaActual() { if (vistaActualIdx < 0 || !imagenCargada) return; let v = mesaActual.vistas[vistaActualIdx]; v.nombre = document.getElementById('inputNombreVista').value || `Vista ${vistaActualIdx + 1}`; v.notas = document.getElementById('inputNotasVista').value; v.cotas = JSON.parse(JSON.stringify(cotas)); v.angulos = JSON.parse(JSON.stringify(angulos)); v.isFlattened = isFlattened; v.pixelesPorCm = pixelesPorCm; }
+        function sincronizarVistaActual() { if (vistaActualIdx < 0 || !imagenCargada) return; let v = mesaActual.vistas[vistaActualIdx]; v.nombre = document.getElementById('inputNombreVista').value || `Vista ${vistaActualIdx + 1}`; v.notas = document.getElementById('inputNotasVista').value; v.cotas = JSON.parse(JSON.stringify(cotas)); v.angulos = JSON.parse(JSON.stringify(angulos)); v.isFlattened = isFlattened; v.pixelesPorCm = pixelesPorCm; v.imagenSrc = imagenCargada.src; }
 
         function cargarVistaEnCanvas(idx) {
             if (idx < 0 || idx >= mesaActual.vistas.length) return; vistaActualIdx = idx; bloquearClics = true; document.getElementById('estado').innerText = "Cargando vista...";
@@ -249,7 +262,12 @@
                 let inpNom = document.getElementById('inputNombreVista'); inpNom.value = v.nombre; inpNom.blur();
                 let inpNot = document.getElementById('inputNotasVista'); inpNot.value = v.notas || ""; inpNot.blur();
                 historial = []; guardarEstado(); cotaSeleccionadaIdx = -1; angSelIdx = -1; tempPuntos = []; calibracionMode = false; window.tempP1 = null; window.tempAngulo = [];
-                document.getElementById('panelAplanar').style.display = 'none'; document.getElementById('btnAplanarToggle').classList.remove('activo');
+                document.getElementById('panelAplanar').style.display = 'none';
+                if (isFlattened) {
+                    document.getElementById('btnAplanarToggle').classList.add('activo');
+                } else {
+                    document.getElementById('btnAplanarToggle').classList.remove('activo');
+                }
                 mostrarPanelEdicion(-1, -1); document.getElementById('herramientas').style.display = 'block'; centrarImagen(); dibujar(); bloquearClics = false; actualizarUIVistas(); document.getElementById('estado').innerText = `Modo Dibujo. (${v.nombre})`;
             }; imgTemp.src = v.imagenSrc;
         }
@@ -301,7 +319,30 @@
         document.getElementById('btnLimpiarVista').addEventListener('click', () => { if (!confirm("¿Borrar cotas y ángulos?") || (!cotas.length && !angulos.length)) return; guardarEstado(); cotas = []; angulos = []; cotaSeleccionadaIdx = -1; angSelIdx = -1; window.tempP1 = null; document.getElementById('panelEdicion').style.display = 'none'; actualizarResultado(); dibujar(); });
 
         function guardarEstado() { if (vistaActualIdx < 0) return; cambiosSinGuardar = true; historial.push({ cotas: JSON.parse(JSON.stringify(cotas)), angulos: JSON.parse(JSON.stringify(angulos)), isFlattened, pixelesPorCm, imgSrc: imagenCargada.src }); if (historial.length > MAX_HISTORIAL) historial.shift(); }
-        function onOpenCvReady() { document.getElementById('loading').style.display = 'none'; }
+        function onOpenCvReady() { 
+            document.getElementById('loading').style.display = 'none';
+            console.log('OpenCV cargado correctamente'); 
+        }
+        
+        function esCuadrilateroConvexo(puntos) {
+            if (puntos.length !== 4) return false;
+            
+            // Calcula los productos cruzados para verificar convexidad
+            function productoCruz(a, b, c) {
+                return (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
+            }
+            
+            const p1 = puntos[0], p2 = puntos[1], p3 = puntos[2], p4 = puntos[3];
+            
+            // Verificar orientación de los triángulos
+            const o1 = productoCruz(p1, p2, p3);
+            const o2 = productoCruz(p2, p3, p4);
+            const o3 = productoCruz(p3, p4, p1);
+            const o4 = productoCruz(p4, p1, p2);
+            
+            // Todos deben tener el mismo signo para ser convexo
+            return (o1 * o2 > 0) && (o2 * o3 > 0) && (o3 * o4 > 0);
+        }
 
         document.getElementById('btnMover').addEventListener('click', function () { modoMover = !modoMover; this.classList.toggle('activo'); canvas.style.cursor = modoMover ? 'grab' : 'crosshair'; });
         document.getElementById('btnZoomIn').addEventListener('click', () => { scale *= 1.3; dibujar(); });
@@ -480,6 +521,7 @@
 
             if (isPointing) {
                 isPointing = false; lastValidLockedPoint = null; isAnchoredVisually = false;
+                lupaCanvas.style.display = 'none'; lupaCtx.clearRect(0, 0, lupaCanvas.width, lupaCanvas.height);
                 if (calibracionMode) { tempPuntos.push({ x: fx, y: fy }); dibujar(); if (tempPuntos.length === 4) { document.getElementById('btnAplanar').disabled = false; document.getElementById('estado').innerText = "¡4 puntos listos!"; } }
                 else if (modoCota === 'dibujar') {
                     if (!window.tempP1) { window.tempP1 = { x: fx, y: fy }; document.getElementById('estado').innerText = "Toca segundo punto."; dibujar(); }
@@ -627,12 +669,23 @@
         }
 
         function aplanarPlano() {
-            if (tempPuntos.length !== 4 || typeof cv === 'undefined') { alert("Faltan 4 puntos o OpenCV."); return; }
+            if (tempPuntos.length !== 4) { alert("Se necesitan exactamente 4 puntos de calibración."); return; }
+            if (typeof cv === 'undefined') { alert("OpenCV no se ha cargado correctamente. Recarga la página."); return; }
+            
             let i1 = parseFloat(document.getElementById('anchoReal').value), i2 = parseFloat(document.getElementById('altoReal').value);
-            if (isNaN(i1) || isNaN(i2) || i1 <= 0 || i2 <= 0) { alert("Introduce medidas reales válidas."); return; }
+            if (isNaN(i1) || isNaN(i2) || i1 <= 0 || i2 <= 0) { alert("Introduce medidas reales válidas (ancho y alto)."); return; }
+            
+            // Verify points form a convex quadrilateral
+            if (!esCuadrilateroConvexo(tempPuntos)) { 
+                alert("Los puntos deben formar un cuadrilátero convexo (sin ángulos mayores a 180°)."); 
+                return; 
+            }
+            
             bloquearClics = true; document.getElementById('estado').innerText = "Calculando transformación...";
             setTimeout(() => {
                 try {
+                    console.log('Puntos de calibración:', tempPuntos);
+                    console.log('Medidas:', i1, i2);
                     let src = cv.matFromArray(4, 1, cv.CV_32FC2, [tempPuntos[0].x, tempPuntos[0].y, tempPuntos[1].x, tempPuntos[1].y, tempPuntos[2].x, tempPuntos[2].y, tempPuntos[3].x, tempPuntos[3].y]);
                     let dTop = Math.hypot(tempPuntos[1].x - tempPuntos[0].x, tempPuntos[1].y - tempPuntos[0].y), dBottom = Math.hypot(tempPuntos[2].x - tempPuntos[3].x, tempPuntos[2].y - tempPuntos[3].y), dLeft = Math.hypot(tempPuntos[3].x - tempPuntos[0].x, tempPuntos[3].y - tempPuntos[0].y), dRight = Math.hypot(tempPuntos[2].x - tempPuntos[1].x, tempPuntos[2].y - tempPuntos[1].y);
                     let outW = Math.max(100, Math.round(Math.max(dTop, dBottom))), outH = Math.max(100, Math.round(Math.max(dLeft, dRight)));
@@ -640,12 +693,25 @@
                     let M = cv.getPerspectiveTransform(src, dst);
                     let imgCanvas = document.createElement('canvas'); imgCanvas.width = canvas.width; imgCanvas.height = canvas.height; imgCanvas.getContext('2d').drawImage(imagenCargada, 0, 0);
                     let srcMat = cv.imread(imgCanvas), dstMat = new cv.Mat();
-                    cv.warpPerspective(srcMat, dstMat, M, new cv.Size(outW, outH), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-                    let outCanvas = document.createElement('canvas'); outCanvas.width = outW; outCanvas.height = outH; cv.imshow(outCanvas, dstMat);
+                    // Calculate the bounding box of the transformed image
+                    let corners = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, canvas.width, 0, canvas.width, canvas.height, 0, canvas.height]);
+                    let transformedCorners = new cv.Mat();
+                    cv.perspectiveTransform(corners, transformedCorners, M);
+                    let minX = Math.min(transformedCorners.data32F[0], transformedCorners.data32F[2], transformedCorners.data32F[4], transformedCorners.data32F[6]);
+                    let minY = Math.min(transformedCorners.data32F[1], transformedCorners.data32F[3], transformedCorners.data32F[5], transformedCorners.data32F[7]);
+                    let maxX = Math.max(transformedCorners.data32F[0], transformedCorners.data32F[2], transformedCorners.data32F[4], transformedCorners.data32F[6]);
+                    let maxY = Math.max(transformedCorners.data32F[1], transformedCorners.data32F[3], transformedCorners.data32F[5], transformedCorners.data32F[7]);
+                    let adjustedW = Math.ceil(maxX - minX), adjustedH = Math.ceil(maxY - minY);
+                    // Adjust the transformation matrix to include the entire image
+                    let adjustM = cv.matFromArray(3, 3, cv.CV_64F, [1, 0, -minX, 0, 1, -minY, 0, 0, 1]);
+                    let finalM = new cv.Mat();
+                    cv.gemm(adjustM, M, 1, new cv.Mat(), 0, finalM);
+                    cv.warpPerspective(srcMat, dstMat, finalM, new cv.Size(adjustedW, adjustedH), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+                    let outCanvas = document.createElement('canvas'); outCanvas.width = adjustedW; outCanvas.height = adjustedH; cv.imshow(outCanvas, dstMat);
                     let nuevosPixelesPorCm = outW / i1;
-                    cotas.forEach(c => { [c.p1, c.p2].forEach(pt => { let ptMat = cv.matFromArray(1, 1, cv.CV_32FC2, [pt.x, pt.y]); let res = new cv.Mat(); cv.perspectiveTransform(ptMat, res, M); pt.x = res.data32F[0]; pt.y = res.data32F[1]; ptMat.delete(); res.delete(); }); c.calcCm = Math.hypot(c.p2.x - c.p1.x, c.p2.y - c.p1.y) / nuevosPixelesPorCm; });
-                    angulos.forEach(a => { [a.p1, a.p2, a.p3].forEach(pt => { let ptMat = cv.matFromArray(1, 1, cv.CV_32FC2, [pt.x, pt.y]); let res = new cv.Mat(); cv.perspectiveTransform(ptMat, res, M); pt.x = res.data32F[0]; pt.y = res.data32F[1]; ptMat.delete(); res.delete(); }); recalcularAngulo(a); });
-                    src.delete(); dst.delete(); M.delete(); srcMat.delete(); dstMat.delete();
+                    cotas.forEach(c => { [c.p1, c.p2].forEach(pt => { let ptMat = cv.matFromArray(1, 1, cv.CV_32FC2, [pt.x, pt.y]); let res = new cv.Mat(); cv.perspectiveTransform(ptMat, res, finalM); pt.x = res.data32F[0]; pt.y = res.data32F[1]; ptMat.delete(); res.delete(); }); c.calcCm = Math.hypot(c.p2.x - c.p1.x, c.p2.y - c.p1.y) / nuevosPixelesPorCm; });
+                    angulos.forEach(a => { [a.p1, a.p2, a.p3].forEach(pt => { let ptMat = cv.matFromArray(1, 1, cv.CV_32FC2, [pt.x, pt.y]); let res = new cv.Mat(); cv.perspectiveTransform(ptMat, res, finalM); pt.x = res.data32F[0]; pt.y = res.data32F[1]; ptMat.delete(); res.delete(); }); recalcularAngulo(a); });
+                    src.delete(); dst.delete(); M.delete(); adjustM.delete(); finalM.delete(); srcMat.delete(); dstMat.delete(); corners.delete(); transformedCorners.delete();
                     pixelesPorCm = nuevosPixelesPorCm; isFlattened = true; tempPuntos = []; calibracionMode = false;
                     document.getElementById('panelAplanar').style.display = 'none'; document.getElementById('btnAplanarToggle').classList.remove('activo'); document.getElementById('btnAplanar').disabled = true;
                     let newImg = new Image();
@@ -657,5 +723,6 @@
 
         window.addEventListener('beforeunload', e => { if (cambiosSinGuardar) { e.preventDefault(); e.returnValue = 'Tienes cambios sin guardar.'; } });
     </script>
+    <div class="version">v3.2 Pro</div>
 </body>
 </html>
